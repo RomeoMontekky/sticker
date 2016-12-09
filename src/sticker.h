@@ -50,6 +50,7 @@ public:
    ISection& GetSection(unsigned long index);
    
    void SetCallback(std::unique_ptr<IStickerCallback>&& callback);
+   IStickerCallback* GetCallback() const;
 
 protected:
    virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) override;

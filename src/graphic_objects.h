@@ -4,6 +4,7 @@
 #include <gdiplus.h>
 #include <memory>
 #include <vector>
+#include <deque>
 #include <string>
 
 namespace BGO
@@ -11,7 +12,7 @@ namespace BGO
 
 class Object;
 using TObjectPtrVector = std::vector<Object*>;
-using TULongVector = std::vector<unsigned long>;
+using TULongVector = std::deque<unsigned long>;
 
 class Object
 {

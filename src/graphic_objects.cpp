@@ -329,7 +329,7 @@ Object::ClickType Group::ProcessClick(long x, long y, TULongVector& group_indexe
          const auto click = m_object_infos[index].m_object->ProcessClick(x, y, group_indexes);
          if (click != ClickType::NoClick)
          {
-            group_indexes.push_back(index);
+            group_indexes.push_front(index);
             return click;
          }
       }

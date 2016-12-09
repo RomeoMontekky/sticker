@@ -95,6 +95,11 @@ void Sticker::SetCallback(std::unique_ptr<IStickerCallback>&& callback)
    m_callback = std::move(callback);
 }
 
+IStickerCallback* Sticker::GetCallback() const
+{
+   return m_callback.get();
+}
+
 LRESULT Sticker::WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
    switch (uMsg)

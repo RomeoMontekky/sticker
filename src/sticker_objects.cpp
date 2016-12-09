@@ -280,6 +280,40 @@ void Sections::CollapseAllExcludingFirst()
    }
 }
 
+// Group overrides
+BGO::Object::ClickType Sections::ProcessClick(long x, long y, BGO::TULongVector& group_indexes)
+{
+   const auto click = BGO::Group::ProcessClick(x, y, group_indexes);
+
+   const auto callback = m_sticker.GetCallback();
+   if (callback != nullptr && BGO::Object::ClickType::ClickDone == click)
+   {
+      const auto section_index = group_indexes[0];
+      const auto section_object_index = group_indexes[1];
+
+      switch (section_object_index)
+      {
+         case Section::idxHeader:
+         {
+            callback->OnHeaderClick(section_index);
+            break;
+         }
+         case Section::idxItems:
+         {
+            callback->OnItemClick(section_index, group_indexes[2]);
+            break;
+         }
+         case Section::idxFooter:
+         {
+            callback->OnFooterClick(section_index);
+            break;
+         }
+      }
+   }
+
+   return click;
+}
+
 ////////// class StickerGraphicObject /////////////
 
 StickerObject::StickerObject(Sticker& sticker) :
@@ -325,8 +359,8 @@ Section& StickerObject::GetSection(unsigned long index)
 
 BGO::Object::ClickType StickerObject::ProcessClick(long x, long y)
 {
-   BGO::TULongVector fake;
-   return ProcessClick(x, y, fake);
+   BGO::TULongVector group_indexes;
+   return ProcessClick(x, y, group_indexes);
 }
 
 void StickerObject::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
@@ -368,14 +402,7 @@ BGO::Object::ClickType StickerObject::ProcessClick(long x, long y, BGO::TULongVe
    // Call of base implementation
    const auto click = BGO::Group::ProcessClick(x, y, group_indexes);
 
-   if (BGO::Object::ClickType::ClickDone == click)
-   {
-      switch (group_indexes.back())
-      {
-
-      }
-   }
-   else if (BGO::Object::ClickType::ClickDoneNeedResize == click)
+   if (BGO::Object::ClickType::ClickDoneNeedResize == click)
    {
       auto& first_section_title = GetSection(0).GetTitle();
       if (first_section_title.GetCollapsed())

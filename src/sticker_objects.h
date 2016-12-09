@@ -75,8 +75,13 @@ public:
    SectionTitle();
 };
 
+class Sections;
+
 class Section : public BGO::Group, public ISection
 {
+   // In order to access Indexes
+   friend class Sections;
+
 public:
    Section(Sticker& sticker);
 
@@ -111,6 +116,9 @@ public:
    Section& GetSection(unsigned long index);
 
    void CollapseAllExcludingFirst();
+
+   // Group overrides
+   virtual ClickType ProcessClick(long x, long y, BGO::TULongVector& group_indexes) override;
    
 private:
    Sticker& m_sticker;
