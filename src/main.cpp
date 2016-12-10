@@ -26,26 +26,34 @@ private:
 class StickerCallback : public IStickerCallback
 {
 public:
+   StickerCallback(HWND parent_window) : m_parent_window(parent_window)
+   {
+      // no code
+   }
+
    virtual void OnHeaderClick(unsigned long section_index) override
    {
       std::stringstream sstream;
       sstream << "OnHeader event. Section index = " << section_index;
-      ::MessageBox(nullptr, sstream.str().c_str(), "Event", MB_OK);
+      ::MessageBox(m_parent_window, sstream.str().c_str(), "Event", MB_OK);
    }
 
    virtual void OnItemClick(unsigned long section_index, unsigned long item_index) override
    {
       std::stringstream sstream;
       sstream << "OnItem event. Section index = " << section_index << ". Item index = " << item_index;
-      ::MessageBox(nullptr, sstream.str().c_str(), "Event", MB_OK);
+      ::MessageBox(m_parent_window, sstream.str().c_str(), "Event", MB_OK);
    }
 
    virtual void OnFooterClick(unsigned long section_index) override
    {
       std::stringstream sstream;
       sstream << "OnFooter event. Section index = " << section_index;
-      ::MessageBox(nullptr, sstream.str().c_str(), "Event", MB_OK);
+      ::MessageBox(m_parent_window, sstream.str().c_str(), "Event", MB_OK);
    }
+
+private:
+   HWND m_parent_window;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -59,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
    Sticker sticker;
    sticker.Create(nullptr, WS_CHILD|WS_VISIBLE|WS_DLGFRAME, 0, 0, 70, 22, main_window.GetHandle());
 
-   sticker.SetCallback(std::make_unique<StickerCallback>());
+   sticker.SetCallback(std::make_unique<StickerCallback>(main_window.GetHandle()));
    
    sticker.SetRedraw(false);
    {

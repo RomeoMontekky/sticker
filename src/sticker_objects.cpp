@@ -51,32 +51,32 @@ ItemTime::ItemTime() :
 /////////// class ItemDesctiption //////////
 
 ItemDescription::ItemDescription() :
-   BGO::ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
 {}
 
 /////////// class SectionItem //////////
 
-SectionItem::SectionItem() : BGO::Group()
+SectionItem::SectionItem() : Group(GroupType::Horizontal)
 {
-   BGO::Group::SetObjectCount(idxLast);
-   BGO::Group::SetObject(idxDate, std::make_unique<ItemDate>(), BGO::Group::GluingType::Right, g_indent_horz);
-   BGO::Group::SetObject(idxTime, std::make_unique<ItemTime>(), BGO::Group::GluingType::Right, g_indent_horz);
-   BGO::Group::SetObject(idxDesc, std::make_unique<ItemDescription>(), BGO::Group::GluingType::Right, g_indent_horz);
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxDate, std::make_unique<ItemDate>(), AligningType::MaxCoordinate, g_indent_horz);
+   Group::SetObject(idxTime, std::make_unique<ItemTime>(), AligningType::MaxCoordinate, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<ItemDescription>(), AligningType::MaxCoordinate, g_indent_horz);
 }
 
 bool SectionItem::SetDate(const char* text)
 {
-   return static_cast<BGO::Text*>(BGO::Group::GetObject(idxDate))->SetText(text);
+   return static_cast<BGO::Text*>(Group::GetObject(idxDate))->SetText(text);
 }
 
 bool SectionItem::SetTime(const char* text)
 {
-   return static_cast<BGO::Text*>(BGO::Group::GetObject(idxTime))->SetText(text);
+   return static_cast<BGO::Text*>(Group::GetObject(idxTime))->SetText(text);
 }
 
 bool SectionItem::SetDescription(const char* text)
 {
-   return static_cast<BGO::Text*>(BGO::Group::GetObject(idxDesc))->SetText(text);
+   return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
 /////////// class SectionHeader //////////
@@ -99,21 +99,21 @@ FooterDescription::FooterDescription() :
 
 ///////////// class SectionFooter ////////////////
 
-SectionFooter::SectionFooter() : BGO::Group()
+SectionFooter::SectionFooter() : Group(GroupType::Horizontal)
 {
-   BGO::Group::SetObjectCount(idxLast);
-   BGO::Group::SetObject(idxPrefix, std::make_unique<FooterPrefix>(), BGO::Group::GluingType::Right, g_indent_horz);
-   BGO::Group::SetObject(idxDesc, std::make_unique<FooterDescription>(), BGO::Group::GluingType::Right, g_indent_horz);
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxPrefix, std::make_unique<FooterPrefix>(), Group::AligningType::MaxCoordinate, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<FooterDescription>(), Group::AligningType::MaxCoordinate, g_indent_horz);
 }
 
 bool SectionFooter::SetPrefix(const char* text)
 {
-   return static_cast<BGO::Text*>(BGO::Group::GetObject(idxPrefix))->SetText(text);
+   return static_cast<BGO::Text*>(Group::GetObject(idxPrefix))->SetText(text);
 }
 
 bool SectionFooter::SetDescription(const char* text)
 {
-   return static_cast<BGO::Text*>(BGO::Group::GetObject(idxDesc))->SetText(text);
+   return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
 /////////// class SectionTitle ////////////
@@ -125,23 +125,23 @@ SectionTitle::SectionTitle() :
 
 ///////////// class Section ////////////////
 
-Section::Section(Sticker& sticker) : BGO::Group(), m_sticker(sticker)
+Section::Section(Sticker& sticker) : Group(GroupType::Vertical), m_sticker(sticker)
 {
-   BGO::Group::SetObjectCount(idxLast);
-   BGO::Group::SetObject(idxTitle, std::make_unique<SectionTitle>(), BGO::Group::GluingType::Bottom, g_indent_vert);
-   BGO::Group::SetObject(idxHeader, std::make_unique<SectionHeader>(), BGO::Group::GluingType::Bottom, g_indent_vert);
-   BGO::Group::SetObject(idxItems, std::make_unique<BGO::Group>(), BGO::Group::GluingType::Bottom, g_indent_vert);
-   BGO::Group::SetObject(idxFooter, std::make_unique<SectionFooter>(), BGO::Group::GluingType::Bottom, g_indent_vert);
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxTitle, std::make_unique<SectionTitle>(), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxHeader, std::make_unique<SectionHeader>(), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxItems, std::make_unique<Group>(GroupType::Vertical), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxFooter, std::make_unique<SectionFooter>(), AligningType::MinCoordinate, g_indent_vert);
 }
 
 const SectionTitle& Section::GetTitle() const
 {
-   return *static_cast<const SectionTitle*>(BGO::Group::GetObject(idxTitle));
+   return *static_cast<const SectionTitle*>(Group::GetObject(idxTitle));
 }
 
 SectionTitle& Section::GetTitle()
 {
-   return *static_cast<SectionTitle*>(BGO::Group::GetObject(idxTitle));
+   return *static_cast<SectionTitle*>(Group::GetObject(idxTitle));
 }
 
 bool Section::IsObjectVisible(unsigned long index) const
@@ -151,7 +151,7 @@ bool Section::IsObjectVisible(unsigned long index) const
 
 void Section::SetTitle(const char* title)
 {
-   if (static_cast<BGO::Text*>(BGO::Group::GetObject(idxTitle))->SetText(title))
+   if (static_cast<BGO::Text*>(Group::GetObject(idxTitle))->SetText(title))
    {
       m_sticker.SetDirty();
    }
@@ -170,7 +170,7 @@ void Section::SetOwnerName(const char* owner_name)
 
 void Section::SetHeader(const char* description)
 {
-   if (static_cast<SectionHeader*>(BGO::Group::GetObject(idxHeader))->SetText(description))
+   if (static_cast<SectionHeader*>(Group::GetObject(idxHeader))->SetText(description))
    {
       m_sticker.SetDirty();
    }
@@ -179,7 +179,7 @@ void Section::SetHeader(const char* description)
 
 void Section::SetFooter(const char* prefix, const char* description)
 {
-   auto footer = static_cast<SectionFooter*>(BGO::Group::GetObject(idxFooter));
+   auto footer = static_cast<SectionFooter*>(Group::GetObject(idxFooter));
    if (footer->SetPrefix(prefix))
    {
       m_sticker.SetDirty();
@@ -193,7 +193,7 @@ void Section::SetFooter(const char* prefix, const char* description)
 
 void Section::SetItemCount(unsigned long count)
 {
-   auto items = static_cast<BGO::Group*>(BGO::Group::GetObject(idxItems));
+   auto items = static_cast<Group*>(Group::GetObject(idxItems));
    if (items->SetObjectCount(count))
    {
       m_sticker.SetDirty();
@@ -203,14 +203,14 @@ void Section::SetItemCount(unsigned long count)
 
 void Section::SetItem(unsigned long index, const char* date, const char* time, const char* description)
 {
-   auto items = static_cast<BGO::Group*>(BGO::Group::GetObject(idxItems));
+   auto items = static_cast<Group*>(Group::GetObject(idxItems));
 
    auto item = static_cast<SectionItem*>(items->GetObject(index));
    if (nullptr == item)
    {
       auto item_ptr = std::make_unique<SectionItem>();
       item = item_ptr.get();
-      items->SetObject(index, std::move(item_ptr), BGO::Group::GluingType::Bottom, g_indent_vert);
+      items->SetObject(index, std::move(item_ptr), AligningType::MinCoordinate, g_indent_vert);
    }
 
    if (item->SetDate(date))
@@ -231,14 +231,14 @@ void Section::SetItem(unsigned long index, const char* date, const char* time, c
 
 ////////// class Sections /////////////
 
-Sections::Sections(Sticker& sticker) : m_sticker(sticker)
+Sections::Sections(Sticker& sticker) : Group(GroupType::Vertical), m_sticker(sticker)
 {
    // no code
 }
 
 void Sections::SetSectionCount(unsigned long count)
 {
-   if (BGO::Group::SetObjectCount(count))
+   if (Group::SetObjectCount(count))
    {
       m_sticker.SetDirty();
    }
@@ -247,25 +247,25 @@ void Sections::SetSectionCount(unsigned long count)
 
 unsigned long Sections::GetSectionCount() const
 {
-   return BGO::Group::GetObjectCount();     
+   return Group::GetObjectCount();
 }
 
 const Section& Sections::GetSection(unsigned long index) const
 {
-   auto section = static_cast<const Section*>(BGO::Group::GetObject(index));
+   auto section = static_cast<const Section*>(Group::GetObject(index));
    assert(section != nullptr);
    return *section;
 }
 
 Section& Sections::GetSection(unsigned long index)
 {
-   auto section = static_cast<Section*>(BGO::Group::GetObject(index));
+   auto section = static_cast<Section*>(Group::GetObject(index));
    if (nullptr == section)
    {
       auto section_ptr = std::make_unique<Section>(m_sticker);
       section = section_ptr.get();
       section->GetTitle().SetCollapsed(index > 0);
-      BGO::Group::SetObject(index, std::move(section_ptr), BGO::Group::GluingType::Bottom, g_indent_vert);
+      Group::SetObject(index, std::move(section_ptr), AligningType::MinCoordinate, g_indent_vert);
    }
    return *section;
 }
@@ -283,7 +283,7 @@ void Sections::CollapseAllExcludingFirst()
 // Group overrides
 BGO::Object::ClickType Sections::ProcessClick(long x, long y, BGO::TULongVector& group_indexes)
 {
-   const auto click = BGO::Group::ProcessClick(x, y, group_indexes);
+   const auto click = Group::ProcessClick(x, y, group_indexes);
 
    const auto callback = m_sticker.GetCallback();
    if (callback != nullptr && BGO::Object::ClickType::ClickDone == click)
@@ -317,11 +317,11 @@ BGO::Object::ClickType Sections::ProcessClick(long x, long y, BGO::TULongVector&
 ////////// class StickerGraphicObject /////////////
 
 StickerObject::StickerObject(Sticker& sticker) :
-   BGO::Group(), m_minimized_boundary(), m_state(StateType::Minimized), m_sticker(sticker)
+   Group(GroupType::Vertical), m_minimized_boundary(), m_state(StateType::Minimized), m_sticker(sticker)
 {
-   BGO::Group::SetObjectCount(idxLast);
-   BGO::Group::SetObject(idxSections, std::make_unique<Sections>(sticker), BGO::Group::GluingType::Bottom, g_indent_vert);
-   //BGO::Group::SetObject(idxEtc, std::make_unique<BGO::Text>(), BGO::Group::GluingType::Bottom, g_indent_vert);
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::MinCoordinate, g_indent_vert);
+   //Group::SetObject(idxEtc, std::make_unique<BGO::Text>(), AligningType::MinCoordinate, g_indent_vert);
 }
 
 void StickerObject::Initialize(const RECT& boundary)
@@ -339,22 +339,22 @@ StickerObject::StateType StickerObject::GetState() const
 
 void StickerObject::SetSectionCount(unsigned long count)
 {
-   static_cast<Sections*>(BGO::Group::GetObject(idxSections))->SetSectionCount(count);
+   static_cast<Sections*>(Group::GetObject(idxSections))->SetSectionCount(count);
 }
 
 unsigned long StickerObject::GetSectionCount() const
 {
-   return static_cast<const Sections*>(BGO::Group::GetObject(idxSections))->GetSectionCount();
+   return static_cast<const Sections*>(Group::GetObject(idxSections))->GetSectionCount();
 }
 
 const Section& StickerObject::GetSection(unsigned long index) const
 {
-   return static_cast<const Sections*>(BGO::Group::GetObject(idxSections))->GetSection(index);
+   return static_cast<const Sections*>(Group::GetObject(idxSections))->GetSection(index);
 }
 
 Section& StickerObject::GetSection(unsigned long index)
 {
-   return static_cast<Sections*>(BGO::Group::GetObject(idxSections))->GetSection(index);
+   return static_cast<Sections*>(Group::GetObject(idxSections))->GetSection(index);
 }
 
 BGO::Object::ClickType StickerObject::ProcessClick(long x, long y)
@@ -372,7 +372,7 @@ void StickerObject::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplu
    }
    else
    {
-      BGO::Group::RecalculateBoundary(x, y, graphics);
+      Group::RecalculateBoundary(x, y, graphics);
    }
 }
 
@@ -387,7 +387,7 @@ void StickerObject::Draw(Gdiplus::Graphics* graphics) const
    }
    else
    {
-      BGO::Group::Draw(graphics);
+      Group::Draw(graphics);
    }
 }
 
@@ -400,7 +400,7 @@ BGO::Object::ClickType StickerObject::ProcessClick(long x, long y, BGO::TULongVe
    }
    
    // Call of base implementation
-   const auto click = BGO::Group::ProcessClick(x, y, group_indexes);
+   const auto click = Group::ProcessClick(x, y, group_indexes);
 
    if (BGO::Object::ClickType::ClickDoneNeedResize == click)
    {

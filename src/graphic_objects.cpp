@@ -29,7 +29,7 @@ std::wstring AsciiToWide(const char* input)
 namespace BGO
 {
 
-///////////// class Base ////////
+///////////// class Object ////////
 
 Object::Object() : m_boundary()
 {
@@ -44,6 +44,11 @@ Object::~Object()
 const Gdiplus::RectF& Object::GetBoundary() const
 {
    return m_boundary;
+}
+
+void Object::OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y)
+{
+   m_boundary.Offset(offset_x, offset_y);
 }
 
 Object::ClickType Object::ProcessClick(long x, long y, TULongVector& group_indexes)
@@ -93,11 +98,6 @@ bool Text::SetText(const char* text)
       return true;
    }
    return false;
-}
-
-const std::wstring& Text::GetText() const
-{
-   return m_text;
 }
 
 void Text::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
@@ -229,8 +229,8 @@ Gdiplus::Color CollapsibleText::GetFontColor() const
 
 ///////////// class Group ////////////////
 
-Group::Group(Gdiplus::REAL indent_before_x, Gdiplus::REAL indent_before_y) :
-   m_indent_before_x(indent_before_x), m_indent_before_y(indent_before_y), m_object_infos()
+Group::Group(GroupType type, Gdiplus::REAL indent_before_x, Gdiplus::REAL indent_before_y) :
+   m_type(type), m_indent_before_x(indent_before_x), m_indent_before_y(indent_before_y), m_object_infos()
 {
    m_object_infos.reserve(10);
 }
@@ -251,11 +251,11 @@ unsigned long Group::GetObjectCount() const
 }
 
 void Group::SetObject(unsigned long index, std::unique_ptr<Object>&& object,
-                      GluingType gluing_type, Gdiplus::REAL indent_after)
+                      AligningType aligning, Gdiplus::REAL indent_after)
 {
    auto& object_info = m_object_infos.at(index);
    object_info.m_object = std::move(object);
-   object_info.m_gluing_type = gluing_type;
+   object_info.m_aligning = aligning;
    object_info.m_indent_after = indent_after;
 }
 
@@ -269,6 +269,18 @@ Object* Group::GetObject(unsigned long index)
    return m_object_infos.at(index).m_object.get();
 }
 
+void Group::OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y)
+{
+   Object::OffsetBoundary(offset_x, offset_y);
+   for (auto index = 0UL; index < m_object_infos.size(); ++index)
+   {
+      if (IsObjectVisible(index))
+      {
+         m_object_infos[index].m_object->OffsetBoundary(offset_x, offset_y);
+      }
+   }
+}
+
 void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
 {
    m_boundary.X = x;
@@ -279,21 +291,25 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
    Gdiplus::REAL indent_x = m_indent_before_x;
    Gdiplus::REAL indent_y = m_indent_before_y;
 
+   // Recalculation is done in two phases:
+   //   1. Recalculated all objects' boundaries and calculate group's bounary as the union.
+   //   2. Offset objects' boundaries to fit its alignment.
+
    for (auto index = 0UL; index < m_object_infos.size(); ++index)
    {
       if (IsObjectVisible(index))
       {
          auto& object_info = m_object_infos[index];
-        
          assert(object_info.m_object);
+
          object_info.m_object->RecalculateBoundary
          (
-            indent_x + ((GluingType::Right == object_info.m_gluing_type) ? m_boundary.GetRight() : m_boundary.GetLeft()),
-            indent_y + ((GluingType::Bottom == object_info.m_gluing_type) ? m_boundary.GetBottom() : m_boundary.GetTop()),
+            indent_x + ((GroupType::Horizontal == m_type) ? m_boundary.GetRight() : m_boundary.GetLeft()),
+            indent_y + ((GroupType::Vertical == m_type) ? m_boundary.GetBottom() : m_boundary.GetTop()),
             graphics
          );
-   
-         if (GluingType::Right == object_info.m_gluing_type)
+
+         if (GroupType::Horizontal == m_type)
          {
             indent_x = object_info.m_indent_after;
             indent_y = 0;
@@ -305,6 +321,32 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
          }
    
          Gdiplus::RectF::Union(m_boundary, m_boundary, object_info.m_object->GetBoundary());
+      }
+   }
+
+   for (auto index = 0UL; index < m_object_infos.size(); ++index)
+   {
+      if (IsObjectVisible(index))
+      {
+         auto& object_info = m_object_infos[index];
+         if (AligningType::MaxCoordinate == object_info.m_aligning)
+         {
+            const auto& object_boundary = object_info.m_object->GetBoundary();
+
+            Gdiplus::REAL offset_x = 0;
+            Gdiplus::REAL offset_y = 0;
+
+            if (GroupType::Horizontal == m_type && m_boundary.Height > object_boundary.Height)
+            {
+               offset_y = m_boundary.Height - object_boundary.Height;
+            }
+            if (GroupType::Vertical == m_type && m_boundary.Width > object_boundary.Width)
+            {
+               offset_x = m_boundary.Width - object_boundary.Width;
+            }
+
+            object_info.m_object->OffsetBoundary(offset_x, offset_y);
+         }
       }
    }
 }

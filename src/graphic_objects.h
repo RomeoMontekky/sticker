@@ -24,6 +24,7 @@ public:
 
    const Gdiplus::RectF& GetBoundary() const;
 
+   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y);
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) = 0;
    virtual void Draw(Gdiplus::Graphics* graphics) const = 0;
    
@@ -54,7 +55,6 @@ public:
         unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color);
    
    bool SetText(const char* text);
-   const std::wstring& GetText() const;
    
    // GraphicObject overrides
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
@@ -118,19 +118,21 @@ private:
 class Group : public Object
 {
 public:
-   Group(Gdiplus::REAL indent_before_x = 0, Gdiplus::REAL indent_before_y = 0);
+   enum class GroupType { Horizontal, Vertical };
+   enum class AligningType { MinCoordinate, MaxCoordinate };
 
-   enum class GluingType { Right, Bottom };
+   Group(GroupType type, Gdiplus::REAL indent_before_x = 0, Gdiplus::REAL indent_before_y = 0);
 
    bool SetObjectCount(unsigned long count);
    unsigned long GetObjectCount() const;
    
    void SetObject(unsigned long index, std::unique_ptr<Object>&& object,
-                  GluingType gluing_type, Gdiplus::REAL indent_after = 0);
+                  AligningType aligning, Gdiplus::REAL indent_after = 0);
    const Object* GetObject(unsigned long index) const;
    Object* GetObject(unsigned long index);
    
    // Base overrides
+   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y) override;
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
    virtual void Draw(Gdiplus::Graphics* graphics) const override;
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
@@ -140,13 +142,14 @@ protected:
    virtual bool IsObjectVisible(unsigned long index) const;
 
 protected:
+   GroupType m_type;
    Gdiplus::REAL m_indent_before_x;
    Gdiplus::REAL m_indent_before_y;
 
    struct ObjectInfo
    {
       std::unique_ptr<Object> m_object;
-      GluingType m_gluing_type;
+      AligningType m_aligning;
       Gdiplus::REAL m_indent_after;
    };
 
