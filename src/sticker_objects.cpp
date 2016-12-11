@@ -39,13 +39,13 @@ namespace Fonts
 /////////// class ItemDate //////////
 
 ItemDate::ItemDate() :
-   BGO::Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
 {}
 
 /////////// class ItemTime //////////
 
 ItemTime::ItemTime() :
-   BGO::Text(Colors::grey_very_light, g_tahoma_name, 8, Gdiplus::FontStyleRegular, Colors::grey_light)
+   Text(Colors::grey_very_light, g_tahoma_name, 8, Gdiplus::FontStyleRegular, Colors::grey_light)
 {}
 
 /////////// class ItemDesctiption //////////
@@ -82,19 +82,19 @@ bool SectionItem::SetDescription(const char* text)
 /////////// class SectionHeader //////////
 
 SectionHeader::SectionHeader() :
-   BGO::Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
 {}
 
 /////////// class FooterPrefix //////////
 
 FooterPrefix::FooterPrefix() :
-   BGO::Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
 {}
 
 /////////// class FooterDescription //////////
 
 FooterDescription::FooterDescription() :
-   BGO::Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black)
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black)
 {}
 
 ///////////// class SectionFooter ////////////////
@@ -119,7 +119,7 @@ bool SectionFooter::SetDescription(const char* text)
 /////////// class SectionTitle ////////////
 
 SectionTitle::SectionTitle() :
-   BGO::CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9,
+   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9,
                         Gdiplus::FontStyleBold, Colors::red_dark, 9, Colors::grey_dark)
 {}
 
@@ -321,7 +321,7 @@ StickerObject::StickerObject(Sticker& sticker) :
 {
    Group::SetObjectCount(idxLast);
    Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::MinCoordinate, g_indent_vert);
-   //Group::SetObject(idxEtc, std::make_unique<BGO::Text>(), AligningType::MinCoordinate, g_indent_vert);
+   //Group::SetObject(idxEtc, std::make_unique<Text>(), AligningType::MinCoordinate, g_indent_vert);
 }
 
 void StickerObject::Initialize(const RECT& boundary)
