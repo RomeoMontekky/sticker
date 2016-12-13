@@ -62,7 +62,7 @@ public:
    
    bool SetText(const char* text);
    
-   // GraphicObject overrides
+   // ObjectWithBackground overrides
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
    virtual void Draw(Gdiplus::Graphics* graphics) const override;
 
@@ -85,11 +85,11 @@ class ClickableText : public Text
 {
 public:
    ClickableText(const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-                 unsigned long font_style, const Gdiplus::Color& font_color, bool is_clickable = true);
+                 unsigned long font_style, const Gdiplus::Color& font_color);
 
    bool SetClickable(bool is_clickable);
 
-   // Base and Text overrides
+   // Text overrides
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
    virtual unsigned long GetFontStyle() const override;
@@ -109,7 +109,7 @@ public:
    void SetCollapsed(bool is_collapsed);
    bool GetCollapsed() const;
    
-   // Base overrides
+   // Object overrides
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
 
 protected:
@@ -125,11 +125,38 @@ private:
    bool m_is_collapsed;
 };
 
+class Line : public ObjectWithBackground
+{
+public:
+   Line(const Gdiplus::Color& back_color, const Gdiplus::Color& color, unsigned long width);
+
+   // ObjectWithBackground overrides
+   virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
+   virtual void Draw(Gdiplus::Graphics* graphics) const override;
+
+private:
+   Gdiplus::Color m_color;
+   unsigned long m_width;
+};
+
+class Image : public Object
+{
+public:
+   Image(/*int resourse_id*/);
+
+   // Object overrides
+   virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
+   virtual void Draw(Gdiplus::Graphics* graphics) const override;
+
+private:
+   //Gdiplus::Image m_image;
+};
+
 class Group : public Object
 {
 public:
    enum class GroupType { Horizontal, Vertical };
-   enum class AligningType { MinCoordinate, MaxCoordinate };
+   enum class AligningType { Min, Middle, Max };
 
    Group(GroupType type, Gdiplus::REAL indent_before_x = 0, Gdiplus::REAL indent_before_y = 0);
 
@@ -141,14 +168,14 @@ public:
    const Object* GetObject(unsigned long index) const;
    Object* GetObject(unsigned long index);
    
-   // Base overrides
+   // Object overrides
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
    virtual void Draw(Gdiplus::Graphics* graphics) const override;
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
    
 protected:
-   // Base override
+   // Object override
    virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y) override;
    // Own virtual method
    virtual bool IsObjectVisible(unsigned long index) const;

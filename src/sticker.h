@@ -7,17 +7,21 @@
 #include <vector>
 #include <memory>
 
+enum class ImageType { None, Ok, Expired, Minus, Arrow };
+
 class ISection
 {
 public:
    virtual ~ISection();
 
-   virtual void SetTitle(const char* title) = 0;
-   virtual void SetOwnerName(const char* owner_name) = 0;
-   virtual void SetHeader(const char* description) = 0;
-   virtual void SetFooter(const char* prefix, const char* description) = 0;
+   virtual void SetOwnerName(const char* name) = 0;
+   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc) = 0;
+   virtual void SetHeader(ImageType image, const char* desc) = 0;
+   virtual void SetFooter(ImageType image, const char* prefix, const char* desc) = 0;
+
    virtual void SetItemCount(unsigned long count) = 0;
-   virtual void SetItem(unsigned long index, const char* date, const char* time, const char* description) = 0;
+   virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,
+                        const char* desc, bool is_clickable) = 0;
 };
 
 class IStickerCallback

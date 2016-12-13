@@ -30,19 +30,33 @@ class SectionItem : public BGO::Group
 public:
    SectionItem();
 
+   bool SetImage(ImageType image);
    bool SetDate(const char* text);
    bool SetTime(const char* text);
    bool SetDescription(const char* text);
+   bool SetClickable(bool is_clickable);
 
 private:
-   enum Indexes { idxDate, idxTime, idxDesc, idxLast };
+   enum Indexes { idxImage, idxDate, idxTime, idxDesc, idxLast };
 };
 
 // TODO: Change text filling
-class SectionHeader : public BGO::Text
+class HeaderDescription : public BGO::Text
+{
+public:
+   HeaderDescription();
+};
+
+class SectionHeader : public BGO::Group
 {
 public:
    SectionHeader();
+
+   bool SetImage(ImageType image);
+   bool SetDescription(const char* text);
+
+private:
+   enum Indexes { idxImage, idxDesc, idxLast };
 };
 
 class FooterPrefix : public BGO::Text
@@ -62,17 +76,39 @@ class SectionFooter : public BGO::Group
 public:
    SectionFooter();
 
+   bool SetImage(ImageType image);
    bool SetPrefix(const char* text);
    bool SetDescription(const char* text);
 
 private:
-   enum Indexes { idxPrefix, idxDesc, idxLast };
+   enum Indexes { idxImage, idxPrefix, idxDesc, idxLast };
 };
 
-class SectionTitle : public BGO::CollapsibleText
+class TitleDescription : public BGO::CollapsibleText
+{
+public:
+   TitleDescription();
+};
+
+class SectionTitle : public BGO::Group
 {
 public:
    SectionTitle();
+
+   const TitleDescription& GetDescription() const;
+   TitleDescription& GetDescription();
+
+   bool SetImage(ImageType image);
+   bool SetDate(const char* text);
+   bool SetTime(const char* text);
+   bool SetDescription(const char* text);
+
+protected:
+   // Group override
+   bool IsObjectVisible(unsigned long index) const override;
+
+private:
+   enum Indexes { idxImage, idxDate, idxTime, idxDesc, idxLast };
 };
 
 class Sections;
@@ -88,16 +124,18 @@ public:
    const SectionTitle& GetTitle() const;
    SectionTitle& GetTitle();
    
+   // ISection overrides
+   virtual void SetOwnerName(const char* name) override;
+   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc) override;
+   virtual void SetHeader(ImageType image, const char* desc) override;
+   virtual void SetFooter(ImageType image, const char* prefix, const char* desc) override;
+
+   virtual void SetItemCount(unsigned long count) override;
+   virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,
+                        const char* desc, bool is_clickable) override;
+protected:
    // Group overrides
    virtual bool IsObjectVisible(unsigned long index) const override;
-
-   // ISection overrides
-   virtual void SetTitle(const char* title) override;
-   virtual void SetOwnerName(const char* owner_name) override;
-   virtual void SetHeader(const char* description) override;
-   virtual void SetFooter(const char* prefix, const char* description) override;
-   virtual void SetItemCount(unsigned long count) override;
-   virtual void SetItem(unsigned long index, const char* date, const char* time, const char* description) override;
 
 private:
    enum Indexes { idxTitle, idxHeader, idxItems, idxFooter, idxLast };

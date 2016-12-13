@@ -61,11 +61,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
    GdiplusInitializer gdi_initializer;
 
    wc::MainWindow main_window;
-   main_window.Create("Main Window", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, 800, 300, 300, 300);
+   main_window.Create("Main Window", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, 600, 200, 400, 400);
    ::ShowWindow(main_window.GetHandle(), nCmdShow);
 
    Sticker sticker;
-   sticker.Create(nullptr, WS_CHILD|WS_VISIBLE|WS_DLGFRAME, 0, 0, 70, 22, main_window.GetHandle());
+   sticker.Create(nullptr, WS_CHILD|WS_VISIBLE|WS_DLGFRAME, 0, 0, 100, 22, main_window.GetHandle());
 
    sticker.SetCallback(std::make_unique<StickerCallback>(main_window.GetHandle()));
    
@@ -74,25 +74,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       sticker.SetSectionCount(3);
       {
          auto& section = sticker.GetSection(0);
-         section.SetTitle("Section 1");
+         section.SetTitle(ImageType::None, "21.09", "12:45", "Section 1");
          section.SetItemCount(2);
-         section.SetItem(0, "21.09", "12:45", "Send");
-         section.SetItem(1, "21.09", "13:00", "Received");
+         section.SetItem(0, ImageType::None, "21.09", "12:45", "Send", true);
+         section.SetItem(1, ImageType::None, "21.09", "13:00", "Received", false);
       }
       {
          auto& section = sticker.GetSection(1);
-         section.SetTitle("Section 2");
+         section.SetTitle(ImageType::None, "22.09", "09:00", "Section 2");
          section.SetItemCount(2);
-         section.SetItem(0, "22.09", "09:00", "Send");
-         section.SetItem(1, "22.09", "09:15", "Received");
+         section.SetItem(0, ImageType::None, "22.09", "09:00", "Send", true);
+         section.SetItem(1, ImageType::None, "22.09", "09:15", "Received", false);
       }
       {
          auto& section = sticker.GetSection(2);
-         section.SetTitle("Section 3");
+         section.SetTitle(ImageType::None, "23.09", "15:00", "Section 3");
          section.SetItemCount(3);
-         section.SetItem(0, "23.09", "15:00", "Send");
-         section.SetItem(1, "23.09", "15:15", "Received");
-         section.SetItem(2, "23.09", "15:30", "Confirmed");
+         section.SetItem(0, ImageType::None, "23.09", "15:00", "Send", true);
+         section.SetItem(1, ImageType::None, "23.09", "15:15", "Received", false);
+         section.SetItem(2, ImageType::None, "23.09", "15:30", "Confirmed", true);
       }
    }
    sticker.SetRedraw(true);

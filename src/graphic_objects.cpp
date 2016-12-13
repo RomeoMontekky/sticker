@@ -144,9 +144,9 @@ Gdiplus::Color Text::GetFontColor() const
 
 ClickableText::ClickableText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-   unsigned long font_style, const Gdiplus::Color& font_color, bool is_clickable) :
+   unsigned long font_style, const Gdiplus::Color& font_color) :
       Text(back_color, font_name, font_size, font_style, font_color),
-      m_is_clickable(is_clickable), m_is_clickable_view(false)
+      m_is_clickable(true), m_is_clickable_view(false)
 {
    // no code
 }
@@ -163,7 +163,11 @@ bool ClickableText::SetClickable(bool is_clickable)
 
 Object::ClickType ClickableText::ProcessClick(long x, long y, TULongVector& group_indexes)
 {
-   return (GetBoundary().Contains(x, y) == TRUE) ? ClickType::ClickDone : ClickType::NoClick;
+   if (m_is_clickable)
+   {
+      return (GetBoundary().Contains(x, y) == TRUE) ? ClickType::ClickDone : ClickType::NoClick;
+   }
+   return Text::ProcessClick(x, y, group_indexes);
 }
 
 void ClickableText::ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects)
@@ -191,7 +195,7 @@ CollapsibleText::CollapsibleText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
    unsigned long font_style, const Gdiplus::Color& font_color,
    unsigned long collapsed_font_size, const Gdiplus::Color& collapsed_font_color) :
-      ClickableText(back_color, font_name, font_size, font_style, font_color, true),
+      ClickableText(back_color, font_name, font_size, font_style, font_color),
       m_collapsed_font_size(collapsed_font_size), m_collapsed_font_color(collapsed_font_color), m_is_collapsed(true)
 {
    // no code
@@ -225,6 +229,61 @@ unsigned long CollapsibleText::GetFontSize() const
 Gdiplus::Color CollapsibleText::GetFontColor() const
 {
    return m_is_collapsed ? m_collapsed_font_color : ClickableText::GetFontColor();
+}
+
+///////////// class Line ////////////////
+
+Line::Line(const Gdiplus::Color& back_color, const Gdiplus::Color& color, unsigned long width) :
+   ObjectWithBackground(back_color), m_color(color), m_width(width)
+{
+   // no code
+}
+
+void Line::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
+{
+   m_boundary.X = x;
+   m_boundary.Y = y;
+   m_boundary.Width = m_width;
+   m_boundary.Height = 2;
+}
+
+void Line::Draw(Gdiplus::Graphics* graphics) const
+{
+   ObjectWithBackground::Draw(graphics);
+
+   // Let's draw two simple lines. First one using main color.
+   // Second one using the same color, but with alpha decreased by 2 times.
+
+   Gdiplus::Pen main_pen(m_color, 1);
+   graphics->DrawLine(&main_pen, m_boundary.GetLeft(), m_boundary.GetTop(),
+                      m_boundary.GetRight(), m_boundary.GetTop());
+
+   Gdiplus::Color shadow_color(m_color.GetA()/2, m_color.GetR(), m_color.GetG(), m_color.GetB());
+   Gdiplus::Pen shadow_pen(shadow_color, 1);
+   graphics->DrawLine(&shadow_pen, m_boundary.GetLeft(), m_boundary.GetTop() + 1,
+                      m_boundary.GetRight(), m_boundary.GetTop() + 1);
+}
+
+///////////// class Image ////////////////
+
+Image::Image(/*int resouse_id*/) : Object()
+{
+   // TODO: Load from resoure
+}
+
+void Image::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
+{
+   // TODO: Get rectangle from the image
+   m_boundary.X = x;
+   m_boundary.Y = y;
+   m_boundary.Width = 10;
+   m_boundary.Height = 0; //10;
+}
+
+void Image::Draw(Gdiplus::Graphics* graphics) const
+{
+   // TODO: Draw the image
+   graphics;
 }
 
 ///////////// class Group ////////////////
@@ -317,7 +376,7 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
       if (IsObjectVisible(index))
       {
          auto& object_info = m_object_infos[index];
-         if (AligningType::MaxCoordinate == object_info.m_aligning)
+         if (object_info.m_aligning != AligningType::Min)
          {
             const auto& object_boundary = object_info.m_object->GetBoundary();
 
@@ -327,10 +386,18 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
             if (GroupType::Horizontal == m_type && m_boundary.Height > object_boundary.Height)
             {
                offset_y = m_boundary.Height - object_boundary.Height;
+               if (AligningType::Middle == object_info.m_aligning)
+               {
+                  offset_y /= 2;
+               }
             }
-            if (GroupType::Vertical == m_type && m_boundary.Width > object_boundary.Width)
+            else if (GroupType::Vertical == m_type && m_boundary.Width > object_boundary.Width)
             {
                offset_x = m_boundary.Width - object_boundary.Width;
+               if (AligningType::Middle == object_info.m_aligning)
+               {
+                  offset_x /= 2;
+               }
             }
 
             object_info.m_object->OffsetBoundary(offset_x, offset_y);

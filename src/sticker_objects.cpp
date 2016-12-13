@@ -59,9 +59,15 @@ ItemDescription::ItemDescription() :
 SectionItem::SectionItem() : Group(GroupType::Horizontal)
 {
    Group::SetObjectCount(idxLast);
-   Group::SetObject(idxDate, std::make_unique<ItemDate>(), AligningType::MaxCoordinate, g_indent_horz);
-   Group::SetObject(idxTime, std::make_unique<ItemTime>(), AligningType::MaxCoordinate, g_indent_horz);
-   Group::SetObject(idxDesc, std::make_unique<ItemDescription>(), AligningType::MaxCoordinate, g_indent_horz);
+   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDate, std::make_unique<ItemDate>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxTime, std::make_unique<ItemTime>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<ItemDescription>(), AligningType::Max, g_indent_horz);
+}
+
+bool SectionItem::SetImage(ImageType image)
+{
+   //return static_cast<BGO::Image*>(Group::GetObject(idxImage))->SetImage(image);
 }
 
 bool SectionItem::SetDate(const char* text)
@@ -79,11 +85,35 @@ bool SectionItem::SetDescription(const char* text)
    return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
-/////////// class SectionHeader //////////
+bool SectionItem::SetClickable(bool is_clickable)
+{
+   return static_cast<BGO::ClickableText*>(Group::GetObject(idxDesc))->SetClickable(is_clickable);
+}
 
-SectionHeader::SectionHeader() :
+////////// class HeaderDescription //////////
+
+HeaderDescription::HeaderDescription() :
    Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
 {}
+
+/////////// class SectionHeader //////////
+
+SectionHeader::SectionHeader() : Group(GroupType::Horizontal)
+{
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<HeaderDescription>(), AligningType::Max, g_indent_horz);
+}
+
+bool SectionHeader::SetImage(ImageType image)
+{
+   //return static_cast<BGO::Image*>(Group::GetObject(idxImage))->SetImage();
+}
+
+bool SectionHeader::SetDescription(const char* text)
+{
+   return static_cast<HeaderDescription*>(Group::GetObject(idxImage))->SetText(text);
+}
 
 /////////// class FooterPrefix //////////
 
@@ -102,8 +132,14 @@ FooterDescription::FooterDescription() :
 SectionFooter::SectionFooter() : Group(GroupType::Horizontal)
 {
    Group::SetObjectCount(idxLast);
-   Group::SetObject(idxPrefix, std::make_unique<FooterPrefix>(), Group::AligningType::MaxCoordinate, g_indent_horz);
-   Group::SetObject(idxDesc, std::make_unique<FooterDescription>(), Group::AligningType::MaxCoordinate, g_indent_horz);
+   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), Group::AligningType::Max, g_indent_horz);
+   Group::SetObject(idxPrefix, std::make_unique<FooterPrefix>(), Group::AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<FooterDescription>(), Group::AligningType::Max, g_indent_horz);
+}
+
+bool SectionFooter::SetImage(ImageType image)
+{
+   //return static_cast<BGO::Image*>(Group::GetObject(idxImage))->SetImage();
 }
 
 bool SectionFooter::SetPrefix(const char* text)
@@ -116,22 +152,68 @@ bool SectionFooter::SetDescription(const char* text)
    return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
+///////// class TitleDesctiption //////////
+
+TitleDescription ::TitleDescription() :
+   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9,
+                   Gdiplus::FontStyleBold, Colors::red_dark, 9, Colors::grey_dark)
+{}
+
 /////////// class SectionTitle ////////////
 
-SectionTitle::SectionTitle() :
-   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9,
-                        Gdiplus::FontStyleBold, Colors::red_dark, 9, Colors::grey_dark)
-{}
+SectionTitle::SectionTitle() : Group(GroupType::Horizontal)
+{
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDate, std::make_unique<ItemDate>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxTime, std::make_unique<ItemTime>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<TitleDescription>(), AligningType::Max, g_indent_horz);
+}
+
+const TitleDescription& SectionTitle::GetDescription() const
+{
+   return *static_cast<const TitleDescription*>(Group::GetObject(idxDesc));
+}
+
+TitleDescription& SectionTitle::GetDescription()
+{
+   return *static_cast<TitleDescription*>(Group::GetObject(idxDesc));
+}
+
+bool SectionTitle::SetImage(ImageType image)
+{
+   //return static_cast<BGO::Image*>(Group::GetObject(idxImage))->SetImage(image);
+}
+
+bool SectionTitle::SetDate(const char* text)
+{
+   return static_cast<ItemDate*>(Group::GetObject(idxDate))->SetText(text);
+}
+
+bool SectionTitle::SetTime(const char* text)
+{
+   return static_cast<ItemTime*>(Group::GetObject(idxTime))->SetText(text);
+}
+
+bool SectionTitle::SetDescription(const char* text)
+{
+   return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetText(text);
+}
+
+bool SectionTitle::IsObjectVisible(unsigned long index) const
+{
+   return GetDescription().GetCollapsed() || idxImage == index || idxDesc == index;
+}
 
 ///////////// class Section ////////////////
 
 Section::Section(Sticker& sticker) : Group(GroupType::Vertical), m_sticker(sticker)
 {
    Group::SetObjectCount(idxLast);
-   Group::SetObject(idxTitle, std::make_unique<SectionTitle>(), AligningType::MinCoordinate, g_indent_vert);
-   Group::SetObject(idxHeader, std::make_unique<SectionHeader>(), AligningType::MinCoordinate, g_indent_vert);
-   Group::SetObject(idxItems, std::make_unique<Group>(GroupType::Vertical), AligningType::MinCoordinate, g_indent_vert);
-   Group::SetObject(idxFooter, std::make_unique<SectionFooter>(), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxTitle, std::make_unique<SectionTitle>(), AligningType::Min, g_indent_vert);
+   Group::SetObject(idxHeader, std::make_unique<SectionHeader>(), AligningType::Min, g_indent_vert);
+   Group::SetObject(idxItems, std::make_unique<Group>(GroupType::Vertical), AligningType::Min, g_indent_vert);
+   Group::SetObject(idxFooter, std::make_unique<SectionFooter>(), AligningType::Min, g_indent_vert);
 }
 
 const SectionTitle& Section::GetTitle() const
@@ -144,47 +226,66 @@ SectionTitle& Section::GetTitle()
    return *static_cast<SectionTitle*>(Group::GetObject(idxTitle));
 }
 
-bool Section::IsObjectVisible(unsigned long index) const
+void Section::SetOwnerName(const char* name)
 {
-   return (index > idxTitle) ? !GetTitle().GetCollapsed() : true;
+   /*
+      if (m_owner_name.SetText(name))
+      {
+         m_sticker.SetDirty();
+      }
+      m_sticker.Update();
+   */
 }
 
-void Section::SetTitle(const char* title)
+void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc)
 {
-   if (static_cast<BGO::Text*>(Group::GetObject(idxTitle))->SetText(title))
+   auto& title = GetTitle();
+   if (title.SetImage(image))
+   {
+      m_sticker.SetDirty();
+   }
+   if (title.SetDescription(desc))
+   {
+      m_sticker.SetDirty();
+   }
+   if (title.SetDate(date))
+   {
+      m_sticker.SetDirty();
+   }
+   if (title.SetTime(time))
+   {
+      m_sticker.SetDirty();
+   }
+   m_sticker.Update();
+
+}
+
+void Section::SetHeader(ImageType image, const char* desc)
+{
+   auto header = static_cast<SectionHeader*>(Group::GetObject(idxHeader));
+   if (header->SetImage(image))
+   {
+      m_sticker.SetDirty();
+   }
+   if (header->SetDescription(desc))
    {
       m_sticker.SetDirty();
    }
    m_sticker.Update();
 }
 
-void Section::SetOwnerName(const char* owner_name)
-{
-/*
-   if (m_owner_name.SetText(owner_name))
-   {
-      m_sticker.SetDirty();
-   }
-   m_sticker.Update();*/
-}
-
-void Section::SetHeader(const char* description)
-{
-   if (static_cast<SectionHeader*>(Group::GetObject(idxHeader))->SetText(description))
-   {
-      m_sticker.SetDirty();
-   }
-   m_sticker.Update();
-}
-
-void Section::SetFooter(const char* prefix, const char* description)
+void Section::SetFooter(ImageType image, const char* prefix, const char* desc)
 {
    auto footer = static_cast<SectionFooter*>(Group::GetObject(idxFooter));
+   if (footer->SetImage(image))
+   {
+      m_sticker.SetDirty();
+   }
    if (footer->SetPrefix(prefix))
    {
       m_sticker.SetDirty();
    }
-   if (footer->SetDescription(description))
+   if (footer->SetDescription(desc))
    {
       m_sticker.SetDirty();
    }
@@ -201,7 +302,8 @@ void Section::SetItemCount(unsigned long count)
    m_sticker.Update();
 }
 
-void Section::SetItem(unsigned long index, const char* date, const char* time, const char* description)
+void Section::SetItem(unsigned long index, ImageType image, const char* date, const char* time,
+                      const char* desc, bool is_clickable)
 {
    auto items = static_cast<Group*>(Group::GetObject(idxItems));
 
@@ -210,9 +312,13 @@ void Section::SetItem(unsigned long index, const char* date, const char* time, c
    {
       auto item_ptr = std::make_unique<SectionItem>();
       item = item_ptr.get();
-      items->SetObject(index, std::move(item_ptr), AligningType::MinCoordinate, g_indent_vert);
+      items->SetObject(index, std::move(item_ptr), AligningType::Min, g_indent_vert);
    }
 
+   if (item->SetImage(image))
+   {
+      m_sticker.SetDirty();
+   }
    if (item->SetDate(date))
    {
       m_sticker.SetDirty();
@@ -221,12 +327,21 @@ void Section::SetItem(unsigned long index, const char* date, const char* time, c
    {
       m_sticker.SetDirty();
    }
-   if (item->SetDescription(description))
+   if (item->SetDescription(desc))
+   {
+      m_sticker.SetDirty();
+   }
+   if (item->SetClickable(is_clickable))
    {
       m_sticker.SetDirty();
    }
 
    m_sticker.Update();
+}
+
+bool Section::IsObjectVisible(unsigned long index) const
+{
+   return !GetTitle().GetDescription().GetCollapsed() || idxTitle == index;
 }
 
 ////////// class Sections /////////////
@@ -264,8 +379,8 @@ Section& Sections::GetSection(unsigned long index)
    {
       auto section_ptr = std::make_unique<Section>(m_sticker);
       section = section_ptr.get();
-      section->GetTitle().SetCollapsed(index > 0);
-      Group::SetObject(index, std::move(section_ptr), AligningType::MinCoordinate, g_indent_vert);
+      section->GetTitle().GetDescription().SetCollapsed(index > 0);
+      Group::SetObject(index, std::move(section_ptr), AligningType::Min, g_indent_vert);
    }
    return *section;
 }
@@ -273,10 +388,10 @@ Section& Sections::GetSection(unsigned long index)
 void Sections::CollapseAllExcludingFirst()
 {
    const auto count = GetSectionCount();
-   GetSection(0).GetTitle().SetCollapsed(false);
+   GetSection(0).GetTitle().GetDescription().SetCollapsed(false);
    for (auto index = 1UL; index < count; ++index)
    {
-      GetSection(index).GetTitle().SetCollapsed(true);
+      GetSection(index).GetTitle().GetDescription().SetCollapsed(true);
    }
 }
 
@@ -320,7 +435,7 @@ StickerObject::StickerObject(Sticker& sticker) :
    Group(GroupType::Vertical), m_minimized_boundary(), m_state(StateType::Minimized), m_sticker(sticker)
 {
    Group::SetObjectCount(idxLast);
-   Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::Min, g_indent_vert);
    //Group::SetObject(idxEtc, std::make_unique<Text>(), AligningType::MinCoordinate, g_indent_vert);
 }
 
@@ -405,9 +520,9 @@ BGO::Object::ClickType StickerObject::ProcessClick(long x, long y, BGO::TULongVe
    if (BGO::Object::ClickType::ClickDoneNeedResize == click)
    {
       auto& first_section_title = GetSection(0).GetTitle();
-      if (first_section_title.GetCollapsed())
+      if (first_section_title.GetDescription().GetCollapsed())
       {
-         first_section_title.SetCollapsed(false);
+         first_section_title.GetDescription().SetCollapsed(false);
          static_cast<Sections*>(GetObject(idxSections))->CollapseAllExcludingFirst();
          m_state = StateType::Minimized;
          return ClickType::ClickDoneNeedResize;
