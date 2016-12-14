@@ -71,7 +71,7 @@ protected:
    virtual const wchar_t* GetFontName() const;
    virtual unsigned long GetFontSize() const;
    virtual unsigned long GetFontStyle() const;
-   virtual Gdiplus::Color GetFontColor() const;
+   virtual const Gdiplus::Color& GetFontColor() const;
    
 private:
    std::wstring m_text;
@@ -81,30 +81,50 @@ private:
    Gdiplus::Color m_font_color;
 };
 
-class ClickableText : public Text
+class HoverableText : public Text
+{
+public:
+   HoverableText(const Gdiplus::Color& back_color, const wchar_t* font_name,
+                 unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color);
+
+   // Text overrides
+   virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
+
+protected:
+   virtual unsigned long GetFontStyle() const override;
+   virtual unsigned long GetFontStyleWithoutHover() const;
+
+private:
+   bool m_is_hovered;
+};
+
+class ClickableText : public HoverableText
 {
 public:
    ClickableText(const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-                 unsigned long font_style, const Gdiplus::Color& font_color);
+                 unsigned long font_style, const Gdiplus::Color& font_color,
+                 const Gdiplus::Color& clickable_font_color);
 
    bool SetClickable(bool is_clickable);
 
    // Text overrides
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
-   virtual unsigned long GetFontStyle() const override;
+
+protected:
+   virtual const Gdiplus::Color& GetFontColor() const override;
 
 private:
+   Gdiplus::Color m_clickable_font_color;
    bool m_is_clickable;
-   bool m_is_clickable_view;
 };
 
-class CollapsibleText : public ClickableText
+class CollapsibleText : public HoverableText
 {
 public:
    CollapsibleText(const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
                    unsigned long font_style, const Gdiplus::Color& font_color,
-                   unsigned long collapsed_font_size, const Gdiplus::Color& collapsed_font_color);
+                   unsigned long collapsed_font_style, const Gdiplus::Color& collapsed_font_color);
    
    void SetCollapsed(bool is_collapsed);
    bool GetCollapsed() const;
@@ -114,13 +134,11 @@ public:
 
 protected:
    // Text overrides
-   virtual unsigned long GetFontSize() const override;
-   virtual Gdiplus::Color GetFontColor() const override;
+   virtual unsigned long GetFontStyleWithoutHover() const override;
+   virtual const Gdiplus::Color& GetFontColor() const override;
    
 private:
-   using ClickableText::SetClickable;
-   
-   unsigned long m_collapsed_font_size;
+   unsigned long m_collapsed_font_style;
    Gdiplus::Color m_collapsed_font_color;
    bool m_is_collapsed;
 };

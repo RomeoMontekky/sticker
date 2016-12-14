@@ -134,19 +134,49 @@ unsigned long Text::GetFontStyle() const
    return m_font_style;
 }
 
-Gdiplus::Color Text::GetFontColor() const
+const Gdiplus::Color& Text::GetFontColor() const
 {
    return m_font_color;
 }
 
+/////////// class HoverableText //////////
+
+HoverableText::HoverableText(
+   const Gdiplus::Color& back_color, const wchar_t* font_name,
+   unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color) :
+      Text(back_color, font_name, font_size, font_style, font_color), m_is_hovered(false)
+{
+   // no code
+}
+
+void HoverableText::ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects)
+{
+   const auto does_contain_cursor = (GetBoundary().Contains(x, y) == TRUE);
+   if (does_contain_cursor != m_is_hovered)
+   {
+      m_is_hovered = does_contain_cursor;
+      invalidated_objects.push_back(this);
+   }
+}
+
+unsigned long HoverableText::GetFontStyle() const
+{
+   const auto font_style = GetFontStyleWithoutHover();
+   return m_is_hovered ? (font_style | Gdiplus::FontStyleUnderline) : font_style;
+}
+
+unsigned long HoverableText::GetFontStyleWithoutHover() const
+{
+   return Text::GetFontStyle();
+}
 
 /////////// class ClickableText ////////////
 
 ClickableText::ClickableText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-   unsigned long font_style, const Gdiplus::Color& font_color) :
-      Text(back_color, font_name, font_size, font_style, font_color),
-      m_is_clickable(true), m_is_clickable_view(false)
+   unsigned long font_style, const Gdiplus::Color& font_color, const Gdiplus::Color& clickable_font_color) :
+      HoverableText(back_color, font_name, font_size, font_style, font_color),
+      m_clickable_font_color(clickable_font_color), m_is_clickable(true)
 {
    // no code
 }
@@ -167,26 +197,20 @@ Object::ClickType ClickableText::ProcessClick(long x, long y, TULongVector& grou
    {
       return (GetBoundary().Contains(x, y) == TRUE) ? ClickType::ClickDone : ClickType::NoClick;
    }
-   return Text::ProcessClick(x, y, group_indexes);
+   return ClickType::NoClick;
 }
 
 void ClickableText::ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects)
 {
    if (m_is_clickable)
    {
-      const auto does_contain_cursor = (GetBoundary().Contains(x, y) == TRUE);
-      if (does_contain_cursor != m_is_clickable_view)
-      {
-         m_is_clickable_view = does_contain_cursor;
-         invalidated_objects.push_back(this);
-      }
+      HoverableText::ProcessHover(x, y, invalidated_objects);
    }
 }
 
-unsigned long ClickableText::GetFontStyle() const
+const Gdiplus::Color& ClickableText::GetFontColor() const
 {
-   const auto font_style = Text::GetFontStyle();
-   return m_is_clickable_view ? (font_style | Gdiplus::FontStyleUnderline) : font_style;
+   return m_is_clickable ? m_clickable_font_color : HoverableText::GetFontColor();
 }
 
 ///////////// class CollapsibleText ////////////////
@@ -194,9 +218,9 @@ unsigned long ClickableText::GetFontStyle() const
 CollapsibleText::CollapsibleText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
    unsigned long font_style, const Gdiplus::Color& font_color,
-   unsigned long collapsed_font_size, const Gdiplus::Color& collapsed_font_color) :
-      ClickableText(back_color, font_name, font_size, font_style, font_color),
-      m_collapsed_font_size(collapsed_font_size), m_collapsed_font_color(collapsed_font_color), m_is_collapsed(true)
+   unsigned long collapsed_font_style, const Gdiplus::Color& collapsed_font_color) :
+      HoverableText(back_color, font_name, font_size, font_style, font_color),
+      m_collapsed_font_style(collapsed_font_style), m_collapsed_font_color(collapsed_font_color), m_is_collapsed(true)
 {
    // no code
 }
@@ -213,7 +237,7 @@ bool CollapsibleText::GetCollapsed() const
 
 Object::ClickType CollapsibleText::ProcessClick(long x, long y, TULongVector& group_indexes)
 {
-   if (ClickableText::ProcessClick(x, y, group_indexes) != ClickType::NoClick)
+   if (GetBoundary().Contains(x, y) == TRUE)
    {
       m_is_collapsed = !m_is_collapsed;
       return ClickType::ClickDoneNeedResize;
@@ -221,14 +245,14 @@ Object::ClickType CollapsibleText::ProcessClick(long x, long y, TULongVector& gr
    return ClickType::NoClick;
 }
 
-unsigned long CollapsibleText::GetFontSize() const
+unsigned long CollapsibleText::GetFontStyleWithoutHover() const
 {
-   return m_is_collapsed ? m_collapsed_font_size : ClickableText::GetFontSize();
+   return m_is_collapsed ? m_collapsed_font_style : HoverableText::GetFontStyleWithoutHover();
 }
 
-Gdiplus::Color CollapsibleText::GetFontColor() const
+const Gdiplus::Color& CollapsibleText::GetFontColor() const
 {
-   return m_is_collapsed ? m_collapsed_font_color : ClickableText::GetFontColor();
+   return m_is_collapsed ? m_collapsed_font_color : HoverableText::GetFontColor();
 }
 
 ///////////// class Line ////////////////

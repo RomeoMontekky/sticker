@@ -51,7 +51,8 @@ ItemTime::ItemTime() :
 /////////// class ItemDesctiption //////////
 
 ItemDescription::ItemDescription() :
-   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black,
+                 Colors::blue_dark)
 {}
 
 /////////// class SectionItem //////////
@@ -155,8 +156,8 @@ bool SectionFooter::SetDescription(const char* text)
 ///////// class TitleDesctiption //////////
 
 TitleDescription ::TitleDescription() :
-   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9,
-                   Gdiplus::FontStyleBold, Colors::red_dark, 9, Colors::grey_dark)
+   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleBold, Colors::red_dark,
+                   Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
 {}
 
 /////////// class SectionTitle ////////////
