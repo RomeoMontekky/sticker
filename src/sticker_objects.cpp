@@ -1,5 +1,6 @@
 #include "sticker_objects.h"
 
+#include <sstream>
 #include <cassert>
 
 // Sticker graphic objects namespace
@@ -12,8 +13,9 @@ namespace
 ////////////////// Constants //////////////////
 
 const wchar_t g_tahoma_name[] = L"Tahoma";
-const auto g_indent_vert = 3;
-const auto g_indent_horz = 3;
+const auto g_indent_vert = 3LU;
+const auto g_indent_horz = 3LU;
+const auto g_shorted_section_amount = 2LU;
 
 namespace Colors
 {
@@ -25,13 +27,6 @@ namespace Colors
    const Gdiplus::Color green_dark(0x72, 0xBE, 0x44);
    const Gdiplus::Color blue_dark(0x00, 0x55, 0xBB);
    const Gdiplus::Color red_dark(0xD9, 0x47, 0x00);
-}
-
-namespace Fonts
-{
-   const Gdiplus::Font tahoma_9_bold(g_tahoma_name, 9, Gdiplus::FontStyleBold);
-   const Gdiplus::Font tahoma_9_regular(g_tahoma_name, 9, Gdiplus::FontStyleRegular);
-   const Gdiplus::Font tahoma_8_regular(g_tahoma_name, 8, Gdiplus::FontStyleRegular);
 }
 
 } // namespace
@@ -206,15 +201,28 @@ bool SectionTitle::IsObjectVisible(unsigned long index) const
    return GetDescription().GetCollapsed() || idxImage == index || idxDesc == index;
 }
 
+/////////// class SectionLine /////////////
+
+SectionLine::SectionLine() : BGO::Line(Colors::grey_very_light, Colors::grey_dark, 200)
+{}
+
+///////////// class OwnerName /////////////
+
+OwnerName::OwnerName() : BGO::Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black)
+{}
+
 ///////////// class Section ////////////////
 
-Section::Section(Sticker& sticker) : Group(GroupType::Vertical), m_sticker(sticker)
+Section::Section(Sticker& sticker) : 
+   Group(GroupType::Vertical), m_sticker(sticker), m_owner_name()
 {
    Group::SetObjectCount(idxLast);
+   Group::SetObject(idxLineBefore, std::make_unique<SectionLine>(), AligningType::Min, g_indent_vert);
    Group::SetObject(idxTitle, std::make_unique<SectionTitle>(), AligningType::Min, g_indent_vert);
    Group::SetObject(idxHeader, std::make_unique<SectionHeader>(), AligningType::Min, g_indent_vert);
    Group::SetObject(idxItems, std::make_unique<Group>(GroupType::Vertical), AligningType::Min, g_indent_vert);
    Group::SetObject(idxFooter, std::make_unique<SectionFooter>(), AligningType::Min, g_indent_vert);
+   Group::SetObject(idxLineAfter, std::make_unique<SectionLine>(), AligningType::Min, g_indent_vert);
 }
 
 const SectionTitle& Section::GetTitle() const
@@ -347,9 +355,9 @@ bool Section::IsObjectVisible(unsigned long index) const
 
 ////////// class Sections /////////////
 
-Sections::Sections(Sticker& sticker) : Group(GroupType::Vertical), m_sticker(sticker)
+Sections::Sections(Sticker& sticker) : 
+   Group(GroupType::Vertical), m_sticker(sticker), m_is_shorted(true)
 {
-   // no code
 }
 
 void Sections::SetSectionCount(unsigned long count)
@@ -357,6 +365,7 @@ void Sections::SetSectionCount(unsigned long count)
    if (Group::SetObjectCount(count))
    {
       m_sticker.SetDirty();
+      SetShorted(true);
    }
    m_sticker.Update();
 }
@@ -384,6 +393,16 @@ Section& Sections::GetSection(unsigned long index)
       Group::SetObject(index, std::move(section_ptr), AligningType::Min, g_indent_vert);
    }
    return *section;
+}
+
+void Sections::SetShorted(bool is_shorted)
+{
+   m_is_shorted = is_shorted && (Group::GetObjectCount() > g_shorted_section_amount);
+}
+
+bool Sections::GetShorted() const
+{
+   return m_is_shorted;
 }
 
 void Sections::CollapseAllExcludingFirst()
@@ -430,47 +449,83 @@ BGO::Object::ClickType Sections::ProcessClick(long x, long y, BGO::TULongVector&
    return click;
 }
 
+bool Sections::IsObjectVisible(unsigned long index) const
+{
+   return !m_is_shorted || (index < g_shorted_section_amount);
+}
+
+///////////// class MoreDescription ///////////////
+
+MoreDescription::MoreDescription() :
+   BGO::ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black, Colors::blue_dark)
+{
+   ClickableText::SetClickable(true);
+   SetMoreCount(0);
+}
+
+void MoreDescription::SetMoreCount(unsigned long count)
+{
+   std::stringstream sstream;
+   sstream << "More";
+   if (count > 0)
+   {
+      sstream << ' ';
+      sstream << count;
+   }
+   ClickableText::SetText(sstream.str().c_str());
+}
+
+///////////////// class More ///////////////////
+
+More::More() : Group(GroupType::Horizontal)
+{
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), AligningType::Max, g_indent_horz);
+   Group::SetObject(idxDesc, std::make_unique<MoreDescription>(), AligningType::Max, g_indent_horz);
+}
+
+void More::SetMoreCount(unsigned long count)
+{
+   static_cast<MoreDescription*>(Group::GetObject(idxDesc))->SetMoreCount(count);
+}
+
 ////////// class StickerGraphicObject /////////////
 
 StickerObject::StickerObject(Sticker& sticker) :
-   Group(GroupType::Vertical), m_minimized_boundary(), m_state(StateType::Minimized), m_sticker(sticker)
+   Group(GroupType::Vertical), m_collapsed_boundary(), m_is_collapsed(true), m_sticker(sticker)
 {
    Group::SetObjectCount(idxLast);
    Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::Min, g_indent_vert);
-   //Group::SetObject(idxEtc, std::make_unique<Text>(), AligningType::MinCoordinate, g_indent_vert);
+   Group::SetObject(idxMore, std::make_unique<More>(), AligningType::Min, g_indent_vert);
 }
 
 void StickerObject::Initialize(const RECT& boundary)
 {
-   m_minimized_boundary.X = boundary.left;
-   m_minimized_boundary.Y = boundary.top;
-   m_minimized_boundary.Width = boundary.right - boundary.left;
-   m_minimized_boundary.Height = boundary.bottom - boundary.top;
-}
-
-StickerObject::StateType StickerObject::GetState() const
-{
-   return m_state;
+   m_collapsed_boundary.X = boundary.left;
+   m_collapsed_boundary.Y = boundary.top;
+   m_collapsed_boundary.Width = boundary.right - boundary.left;
+   m_collapsed_boundary.Height = boundary.bottom - boundary.top;
 }
 
 void StickerObject::SetSectionCount(unsigned long count)
 {
-   static_cast<Sections*>(Group::GetObject(idxSections))->SetSectionCount(count);
+   GetSections().SetSectionCount(count);
+   GetMore().SetMoreCount(count - g_shorted_section_amount);
 }
 
 unsigned long StickerObject::GetSectionCount() const
 {
-   return static_cast<const Sections*>(Group::GetObject(idxSections))->GetSectionCount();
+   return GetSections().GetSectionCount();
 }
 
 const Section& StickerObject::GetSection(unsigned long index) const
 {
-   return static_cast<const Sections*>(Group::GetObject(idxSections))->GetSection(index);
+   return GetSections().GetSection(index);
 }
 
 Section& StickerObject::GetSection(unsigned long index)
 {
-   return static_cast<Sections*>(Group::GetObject(idxSections))->GetSection(index);
+   return GetSections().GetSection(index);
 }
 
 BGO::Object::ClickType StickerObject::ProcessClick(long x, long y)
@@ -481,10 +536,10 @@ BGO::Object::ClickType StickerObject::ProcessClick(long x, long y)
 
 void StickerObject::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
 {
-   if (StateType::Minimized == m_state)
+   if (m_is_collapsed)
    {
       GetSection(0).GetTitle().RecalculateBoundary(x, y, graphics);
-      m_boundary = m_minimized_boundary;
+      m_boundary = m_collapsed_boundary;
    }
    else
    {
@@ -497,7 +552,7 @@ void StickerObject::Draw(Gdiplus::Graphics* graphics) const
    Gdiplus::SolidBrush back_brush(Colors::grey_very_light);
    graphics->FillRectangle(&back_brush, GetBoundary());
 
-   if (StateType::Minimized == m_state)
+   if (m_is_collapsed)
    {
       GetSection(0).GetTitle().Draw(graphics);
    }
@@ -509,28 +564,64 @@ void StickerObject::Draw(Gdiplus::Graphics* graphics) const
 
 BGO::Object::ClickType StickerObject::ProcessClick(long x, long y, BGO::TULongVector& group_indexes)
 {
-   if (StateType::Minimized == m_state)
+   if (m_is_collapsed)
    {
-      m_state = StateType::Opened;
+      m_is_collapsed = false;
       return ClickType::ClickDoneNeedResize;
    }
    
    // Call of base implementation
    const auto click = Group::ProcessClick(x, y, group_indexes);
 
-   if (BGO::Object::ClickType::ClickDoneNeedResize == click)
+   switch (group_indexes.front())
    {
-      auto& first_section_title = GetSection(0).GetTitle();
-      if (first_section_title.GetDescription().GetCollapsed())
+      case idxSections:
       {
-         first_section_title.GetDescription().SetCollapsed(false);
-         static_cast<Sections*>(GetObject(idxSections))->CollapseAllExcludingFirst();
-         m_state = StateType::Minimized;
-         return ClickType::ClickDoneNeedResize;
+         if (ClickType::ClickDoneNeedResize == click)
+         {
+            auto& first_section_title = GetSection(0).GetTitle();
+            if (first_section_title.GetDescription().GetCollapsed())
+            {
+               first_section_title.GetDescription().SetCollapsed(false);
+               GetSections().CollapseAllExcludingFirst();
+               GetSections().SetShorted(true);
+               m_is_collapsed = true;
+            }
+         }
+         break;
+      }
+      case idxMore:
+      {
+         if (ClickType::ClickDone == click)
+         {
+            GetSections().SetShorted(false);
+            return ClickType::ClickDoneNeedResize;
+         }
       }
    }
    
    return click;
 }
+
+bool StickerObject::IsObjectVisible(unsigned long index) const
+{
+   return GetSections().GetShorted() || (idxSections == index);
+}
+
+const Sections& StickerObject::GetSections() const
+{
+   return *static_cast<const Sections*>(Group::GetObject(idxSections));
+}
+
+Sections& StickerObject::GetSections()
+{
+   return *static_cast<Sections*>(Group::GetObject(idxSections));
+}
+
+More& StickerObject::GetMore()
+{
+   return *static_cast<More*>(Group::GetObject(idxMore));
+}
+
 
 } // namespace SGO

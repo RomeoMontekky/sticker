@@ -18,7 +18,7 @@ std::wstring AsciiToWide(const char* input)
    assert(output_size > 0);
 
    std::unique_ptr<wchar_t[]> output(new wchar_t[output_size]);
-   auto ret = ::MultiByteToWideChar(CP_ACP, 0, input, input_size, output.get(), output_size);
+   auto ret = ::MultiByteToWideChar(1251, 0, input, input_size, output.get(), output_size);
    assert(ret != 0);
 
    return std::wstring(output.get(), output.get() + output_size);

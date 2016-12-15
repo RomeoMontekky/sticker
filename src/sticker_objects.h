@@ -111,6 +111,18 @@ private:
    enum Indexes { idxImage, idxDate, idxTime, idxDesc, idxLast };
 };
 
+class SectionLine : public BGO::Line
+{
+public:
+   SectionLine();
+};
+
+class OwnerName : public BGO::Text
+{
+public:
+   OwnerName();
+};
+
 class Sections;
 
 class Section : public BGO::Group, public ISection
@@ -138,8 +150,9 @@ protected:
    virtual bool IsObjectVisible(unsigned long index) const override;
 
 private:
-   enum Indexes { idxTitle, idxHeader, idxItems, idxFooter, idxLast };
+   enum Indexes { idxLineBefore, idxTitle, idxHeader, idxItems, idxFooter, idxLineAfter, idxLast };
    Sticker& m_sticker;
+   OwnerName m_owner_name;
 };
 
 class Sections : public BGO::Group
@@ -149,17 +162,40 @@ public:
    
    void SetSectionCount(unsigned long count);
    unsigned long GetSectionCount() const;
-   
    const Section& GetSection(unsigned long index) const;
    Section& GetSection(unsigned long index);
-
+   
+   void SetShorted(bool is_shorted);
+   bool GetShorted() const;
    void CollapseAllExcludingFirst();
 
    // Group overrides
    virtual ClickType ProcessClick(long x, long y, BGO::TULongVector& group_indexes) override;
    
+protected:
+   virtual bool IsObjectVisible(unsigned long index) const override;
+   
 private:
    Sticker& m_sticker;
+   bool m_is_shorted;
+};
+
+class MoreDescription : public BGO::ClickableText
+{
+public:
+   MoreDescription();
+   void SetMoreCount(unsigned long count);
+};
+
+class More : public BGO::Group
+{
+public:
+   More();
+   
+   void SetMoreCount(unsigned long count);
+   
+private:
+   enum Indexes { idxImage, idxDesc, idxLast };
 };
 
 class StickerObject : public BGO::Group
@@ -169,27 +205,30 @@ public:
 
    void Initialize(const RECT& boundary);
 
-   enum class StateType { Minimized, Opened, Expanded };
-   StateType GetState() const;
-
    void SetSectionCount(unsigned long count);
    unsigned long GetSectionCount() const;
-
    const Section& GetSection(unsigned long index) const;
    Section& GetSection(unsigned long index);
-
+   
    ClickType ProcessClick(long x, long y);
 
    // Group overrides
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
    virtual void Draw(Gdiplus::Graphics* graphics) const override;
    virtual ClickType ProcessClick(long x, long y, BGO::TULongVector& group_indexes) override;
+   
+protected:
+   virtual bool IsObjectVisible(unsigned long index) const override;
+   
+   const Sections& GetSections() const;
+   Sections& GetSections();
+   More& GetMore();
 
 private:
-   enum Indexes { idxSections, /*idxEtc,*/ idxLast };
+   enum Indexes { idxSections, idxMore, idxLast };
 
-   Gdiplus::RectF m_minimized_boundary;
-   StateType m_state;
+   Gdiplus::RectF m_collapsed_boundary;
+   bool m_is_collapsed;
    Sticker& m_sticker;
 };
 
