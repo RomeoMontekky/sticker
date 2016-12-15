@@ -13,9 +13,10 @@ namespace
 ////////////////// Constants //////////////////
 
 const wchar_t g_tahoma_name[] = L"Tahoma";
-const auto g_indent_vert = 3LU;
-const auto g_indent_horz = 3LU;
-const auto g_shorted_section_amount = 2LU;
+const auto g_indent_vert = 3UL;
+const auto g_indent_horz = 3UL;
+const auto g_line_width = 300UL;
+const auto g_shorted_section_amount = 2UL;
 
 namespace Colors
 {
@@ -203,7 +204,7 @@ bool SectionTitle::IsObjectVisible(unsigned long index) const
 
 /////////// class SectionLine /////////////
 
-SectionLine::SectionLine() : BGO::Line(Colors::grey_very_light, Colors::grey_dark, 200)
+SectionLine::SectionLine() : BGO::Line(Colors::grey_very_light, Colors::grey_dark, g_line_width)
 {}
 
 ///////////// class OwnerName /////////////
@@ -237,13 +238,11 @@ SectionTitle& Section::GetTitle()
 
 void Section::SetOwnerName(const char* name)
 {
-   /*
-      if (m_owner_name.SetText(name))
-      {
-         m_sticker.SetDirty();
-      }
-      m_sticker.Update();
-   */
+   if (m_owner_name.SetText(name))
+   {
+      m_sticker.SetDirty();
+   }
+   m_sticker.Update();
 }
 
 void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc)
@@ -266,7 +265,6 @@ void Section::SetTitle(ImageType image, const char* date, const char* time, cons
       m_sticker.SetDirty();
    }
    m_sticker.Update();
-
 }
 
 void Section::SetHeader(ImageType image, const char* desc)

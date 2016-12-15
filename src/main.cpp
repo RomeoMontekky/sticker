@@ -75,6 +75,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       {
          auto& section = sticker.GetSection(0);
          section.SetTitle(ImageType::None, "21.09", "12:45", "Section 1");
+         section.SetOwnerName("Ivanov A.K.");
          section.SetItemCount(2);
          section.SetItem(0, ImageType::None, "21.09", "12:45", "Send", true);
          section.SetItem(1, ImageType::None, "21.09", "13:00", "Received", false);
@@ -82,6 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       {
          auto& section = sticker.GetSection(1);
          section.SetTitle(ImageType::None, "22.09", "09:00", "Section 2");
+         section.SetOwnerName("Petrov A.S.");
          section.SetItemCount(2);
          section.SetItem(0, ImageType::None, "22.09", "09:00", "Send", true);
          section.SetItem(1, ImageType::None, "22.09", "09:15", "Received", false);
@@ -90,6 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
          auto& section = sticker.GetSection(2);
          section.SetTitle(ImageType::None, "23.09", "15:00", "Section 3");
          section.SetItemCount(3);
+         section.SetOwnerName("Sidorov N.A.");
          section.SetItem(0, ImageType::None, "23.09", "15:00", "Send", true);
          section.SetItem(1, ImageType::None, "23.09", "15:15", "Received", true);
          section.SetItem(2, ImageType::None, "23.09", "15:30", "Confirmed", false);
@@ -97,6 +100,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       {
          auto& section = sticker.GetSection(3);
          section.SetTitle(ImageType::None, "24.09", "16:00", "Section 4");
+         section.SetOwnerName("Bobrov M.I.");
          section.SetItemCount(2);
          section.SetItem(0, ImageType::None, "24.09", "16:00", "Send", true);
          section.SetItem(1, ImageType::None, "24.09", "16:15", "Received", false);

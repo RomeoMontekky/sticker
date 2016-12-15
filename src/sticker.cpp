@@ -173,7 +173,7 @@ void Sticker::OnLButtonUp(long x, long y)
                      SWP_NOZORDER);
       
       m_is_dirty = true;
-      ::InvalidateRect(GetHandle(), nullptr, TRUE);   
+      ::InvalidateRect(GetHandle(), nullptr, FALSE);
    }
 }
 
