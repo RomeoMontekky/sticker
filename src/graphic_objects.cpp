@@ -352,6 +352,18 @@ Object* Group::GetObject(unsigned long index)
    return m_object_infos.at(index).m_object.get();
 }
 
+void Group::OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y)
+{
+   Object::OffsetBoundary(offset_x, offset_y);
+   for (auto index = 0UL; index < m_object_infos.size(); ++index)
+   {
+      if (IsObjectVisible(index))
+      {
+         m_object_infos[index].m_object->OffsetBoundary(offset_x, offset_y);
+      }
+   }
+}
+
 void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
 {
    m_boundary.X = x;
@@ -466,18 +478,6 @@ void Group::ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects)
       if (IsObjectVisible(index))
       {
          m_object_infos[index].m_object->ProcessHover(x, y, invalidated_objects);
-      }
-   }
-}
-
-void Group::OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y)
-{
-   Object::OffsetBoundary(offset_x, offset_y);
-   for (auto index = 0UL; index < m_object_infos.size(); ++index)
-   {
-      if (IsObjectVisible(index))
-      {
-         m_object_infos[index].m_object->OffsetBoundary(offset_x, offset_y);
       }
    }
 }

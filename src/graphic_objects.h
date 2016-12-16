@@ -11,7 +11,6 @@ namespace BGO
 {
 
 class Object;
-class Group;
 
 using TObjectPtrVector = std::vector<Object*>;
 using TULongVector = std::deque<unsigned long>;
@@ -19,8 +18,6 @@ using TULongVector = std::deque<unsigned long>;
 class Object
 {
    Object(const Object& rhs) = delete;
-   // In order to access OffsetBoundary
-   friend class Group;
 
 public:
    Object();
@@ -28,15 +25,13 @@ public:
 
    const Gdiplus::RectF& GetBoundary() const;
 
+   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y);
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) = 0;
    virtual void Draw(Gdiplus::Graphics* graphics) const = 0;
    
    enum class ClickType { NoClick, ClickDone, ClickDoneNeedResize };
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes);
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects);
-
-protected:
-   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y);
 
 protected:
    Gdiplus::RectF m_boundary;
@@ -187,14 +182,13 @@ public:
    Object* GetObject(unsigned long index);
    
    // Object overrides
+   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y) override;   
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
    virtual void Draw(Gdiplus::Graphics* graphics) const override;
    virtual ClickType ProcessClick(long x, long y, TULongVector& group_indexes) override;
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
    
 protected:
-   // Object override
-   virtual void OffsetBoundary(Gdiplus::REAL offset_x, Gdiplus::REAL offset_y) override;
    // Own virtual method
    virtual bool IsObjectVisible(unsigned long index) const;
 

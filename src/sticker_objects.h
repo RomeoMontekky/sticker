@@ -125,7 +125,7 @@ public:
 
 class Sections;
 
-class Section : public BGO::Group, public ISection
+class Section : public ISection, public BGO::Group
 {
    // In order to access Indexes
    friend class Sections;
@@ -145,8 +145,12 @@ public:
    virtual void SetItemCount(unsigned long count) override;
    virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,
                         const char* desc, bool is_clickable) override;
+   
+   // Group overrides   
+   virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
+   virtual void Draw(Gdiplus::Graphics* graphics) const override;
+   
 protected:
-   // Group overrides
    virtual bool IsObjectVisible(unsigned long index) const override;
 
 private:
@@ -180,22 +184,11 @@ private:
    bool m_is_shorted;
 };
 
-class MoreDescription : public BGO::ClickableText
-{
-public:
-   MoreDescription();
-   void SetMoreCount(unsigned long count);
-};
-
-class More : public BGO::Group
+class More : public BGO::ClickableText
 {
 public:
    More();
-   
    void SetMoreCount(unsigned long count);
-   
-private:
-   enum Indexes { idxImage, idxDesc, idxLast };
 };
 
 class StickerObject : public BGO::Group

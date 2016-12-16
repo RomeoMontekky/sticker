@@ -346,6 +346,31 @@ void Section::SetItem(unsigned long index, ImageType image, const char* date, co
    m_sticker.Update();
 }
 
+void Section::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
+{
+   Group::RecalculateBoundary(x, y, graphics);
+   
+   if (!GetTitle().GetDescription().GetCollapsed())
+   {
+      auto items = static_cast<Group*>(Group::GetObject(idxItems));
+      auto first_item = static_cast<SectionItem*>(items->GetObject(0));
+      auto& first_item_boundary = first_item->GetBoundary();
+      
+      // Place owner name on the level of the first section item, margined to left boundary.
+      m_owner_name.RecalculateBoundary(first_item_boundary.X, first_item_boundary.Y, graphics);
+      m_owner_name.OffsetBoundary(m_boundary.Width - m_owner_name.GetBoundary().Width, 0);
+   }
+}
+
+void Section::Draw(Gdiplus::Graphics* graphics) const
+{
+   Group::Draw(graphics);
+   if (!GetTitle().GetDescription().GetCollapsed())
+   {
+      m_owner_name.Draw(graphics);
+   }
+}
+
 bool Section::IsObjectVisible(unsigned long index) const
 {
    return !GetTitle().GetDescription().GetCollapsed() || idxTitle == index;
@@ -452,16 +477,16 @@ bool Sections::IsObjectVisible(unsigned long index) const
    return !m_is_shorted || (index < g_shorted_section_amount);
 }
 
-///////////// class MoreDescription ///////////////
+///////////// class More ///////////////
 
-MoreDescription::MoreDescription() :
+More::More() :
    BGO::ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black, Colors::blue_dark)
 {
    ClickableText::SetClickable(true);
    SetMoreCount(0);
 }
 
-void MoreDescription::SetMoreCount(unsigned long count)
+void More::SetMoreCount(unsigned long count)
 {
    std::stringstream sstream;
    sstream << "More";
@@ -471,20 +496,6 @@ void MoreDescription::SetMoreCount(unsigned long count)
       sstream << count;
    }
    ClickableText::SetText(sstream.str().c_str());
-}
-
-///////////////// class More ///////////////////
-
-More::More() : Group(GroupType::Horizontal)
-{
-   Group::SetObjectCount(idxLast);
-   Group::SetObject(idxImage, std::make_unique<BGO::Image>(), AligningType::Max, g_indent_horz);
-   Group::SetObject(idxDesc, std::make_unique<MoreDescription>(), AligningType::Max, g_indent_horz);
-}
-
-void More::SetMoreCount(unsigned long count)
-{
-   static_cast<MoreDescription*>(Group::GetObject(idxDesc))->SetMoreCount(count);
 }
 
 ////////// class StickerGraphicObject /////////////
