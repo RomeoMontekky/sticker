@@ -3,6 +3,12 @@
 #include <cstring>
 #include <cassert>
 
+// #define TEST_MODE
+
+#ifdef TEST_MODE
+static Gdiplus::Color g_test_rect_color(0, 150, 0);
+#endif // TEST_MODE
+
 namespace
 {
 
@@ -75,6 +81,11 @@ void ObjectWithBackground::Draw(Gdiplus::Graphics* graphics) const
    {
       Gdiplus::SolidBrush back_brush(m_back_color);
       graphics->FillRectangle(&back_brush, GetBoundary());
+
+#ifdef TEST_MODE
+      Gdiplus::Pen test_rect_pen(g_test_rect_color);
+      graphics->DrawRectangle(&test_rect_pen, m_boundary);
+#endif // TEST_MODE
    }
 }
 
@@ -104,7 +115,15 @@ void Text::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphi
 {
    Gdiplus::RectF origin_rect(x, y, 0, 0);
    Gdiplus::Font font(GetFontName(), GetFontSize(), GetFontStyle());
-   graphics->MeasureString(m_text.c_str(), m_text.size(), &font, origin_rect, &m_boundary);
+
+   if (m_text.empty())
+   {
+      m_boundary = origin_rect;
+   }
+   else
+   {
+      graphics->MeasureString(m_text.c_str(), m_text.size(), &font, origin_rect, &m_boundary);
+   }
 }
 
 void Text::Draw(Gdiplus::Graphics* graphics) const
@@ -371,8 +390,8 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
    m_boundary.Width = 0;
    m_boundary.Height = 0;
 
-   Gdiplus::REAL indent_x = m_indent_before_x;
-   Gdiplus::REAL indent_y = m_indent_before_y;
+   Gdiplus::REAL start_x = x + m_indent_before_x;
+   Gdiplus::REAL start_y = y + m_indent_before_y;
 
    // Recalculation is done in two phases:
    //   1. Recalculated all objects' boundaries and calculate group's bounary as the union.
@@ -385,25 +404,21 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
          auto& object_info = m_object_infos[index];
          assert(object_info.m_object);
 
-         object_info.m_object->RecalculateBoundary
-         (
-            indent_x + ((GroupType::Horizontal == m_type) ? m_boundary.GetRight() : m_boundary.GetLeft()),
-            indent_y + ((GroupType::Vertical == m_type) ? m_boundary.GetBottom() : m_boundary.GetTop()),
-            graphics
-         );
+         object_info.m_object->RecalculateBoundary(start_x, start_y, graphics);
 
+         const auto& object_boundary = object_info.m_object->GetBoundary();
          if (GroupType::Horizontal == m_type)
          {
-            indent_x = object_info.m_indent_after;
-            indent_y = 0;
+            start_x = object_boundary.GetRight() + object_info.m_indent_after;
+            start_y = object_boundary.GetTop();
          }
          else
          {
-            indent_x = 0;
-            indent_y = object_info.m_indent_after;
+            start_x = object_boundary.GetLeft();
+            start_y = object_boundary.GetBottom() + object_info.m_indent_after;
          }
    
-         Gdiplus::RectF::Union(m_boundary, m_boundary, object_info.m_object->GetBoundary());
+         Gdiplus::RectF::Union(m_boundary, m_boundary, object_boundary);
       }
    }
 
@@ -421,7 +436,7 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
 
             if (GroupType::Horizontal == m_type && m_boundary.Height > object_boundary.Height)
             {
-               offset_y = m_boundary.Height - object_boundary.Height;
+               offset_y = m_boundary.Height - object_boundary.Height - m_indent_before_y;
                if (AligningType::Middle == object_info.m_aligning)
                {
                   offset_y /= 2;
@@ -429,7 +444,7 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
             }
             else if (GroupType::Vertical == m_type && m_boundary.Width > object_boundary.Width)
             {
-               offset_x = m_boundary.Width - object_boundary.Width;
+               offset_x = m_boundary.Width - object_boundary.Width - m_indent_before_x;
                if (AligningType::Middle == object_info.m_aligning)
                {
                   offset_x /= 2;
@@ -439,6 +454,17 @@ void Group::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graph
             object_info.m_object->OffsetBoundary(offset_x, offset_y);
          }
       }
+   }
+
+   // Take into account the last indent
+   const auto last_indent = m_object_infos.back().m_indent_after;
+   if (GroupType::Horizontal == m_type)
+   {
+      m_boundary.Width += last_indent;
+   }
+   else
+   {
+      m_boundary.Height += last_indent;
    }
 }
 
@@ -451,6 +477,11 @@ void Group::Draw(Gdiplus::Graphics* graphics) const
          m_object_infos[index].m_object->Draw(graphics);
       }
    }
+
+#ifdef TEST_MODE
+   Gdiplus::Pen test_rect_pen(g_test_rect_color);
+   graphics->DrawRectangle(&test_rect_pen, m_boundary);
+#endif // TEST_MODE
 }
 
 Object::ClickType Group::ProcessClick(long x, long y, TULongVector& group_indexes)

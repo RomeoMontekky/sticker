@@ -358,7 +358,7 @@ void Section::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Gra
       
       // Place owner name on the level of the first section item, margined to left boundary.
       m_owner_name.RecalculateBoundary(first_item_boundary.X, first_item_boundary.Y, graphics);
-      m_owner_name.OffsetBoundary(m_boundary.Width - m_owner_name.GetBoundary().Width, 0);
+      m_owner_name.OffsetBoundary(m_boundary.Width - m_owner_name.GetBoundary().Width - g_indent_horz, 0);
    }
 }
 
@@ -495,13 +495,15 @@ void More::SetMoreCount(unsigned long count)
       sstream << ' ';
       sstream << count;
    }
+   sstream << ", show all.";
    ClickableText::SetText(sstream.str().c_str());
 }
 
 ////////// class StickerGraphicObject /////////////
 
 StickerObject::StickerObject(Sticker& sticker) :
-   Group(GroupType::Vertical), m_collapsed_boundary(), m_is_collapsed(true), m_sticker(sticker)
+   Group(GroupType::Vertical, g_indent_horz, g_indent_vert),
+   m_collapsed_boundary(), m_is_collapsed(true), m_sticker(sticker)
 {
    Group::SetObjectCount(idxLast);
    Group::SetObject(idxSections, std::make_unique<Sections>(sticker), AligningType::Min, g_indent_vert);
