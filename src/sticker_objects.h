@@ -40,8 +40,7 @@ private:
    enum Indexes { idxImage, idxDate, idxTime, idxDesc, idxLast };
 };
 
-// TODO: Change text filling
-class HeaderDescription : public BGO::Text
+class HeaderDescription : public BGO::ClickableText
 {
 public:
    HeaderDescription();
@@ -54,12 +53,13 @@ public:
 
    bool SetImage(ImageType image);
    bool SetDescription(const char* text);
+   bool SetClickable(bool is_clickable);
 
 private:
    enum Indexes { idxImage, idxDesc, idxLast };
 };
 
-class FooterPrefix : public BGO::Text
+class FooterPrefix : public BGO::ClickableText
 {
 public:
    FooterPrefix();
@@ -79,6 +79,7 @@ public:
    bool SetImage(ImageType image);
    bool SetPrefix(const char* text);
    bool SetDescription(const char* text);
+   bool SetClickable(bool is_clickable);
 
 private:
    enum Indexes { idxImage, idxPrefix, idxDesc, idxLast };
@@ -95,13 +96,14 @@ class SectionTitle : public BGO::Group
 public:
    SectionTitle();
 
-   const TitleDescription& GetDescription() const;
-   TitleDescription& GetDescription();
-
    bool SetImage(ImageType image);
    bool SetDate(const char* text);
    bool SetTime(const char* text);
    bool SetDescription(const char* text);
+   bool SetColor(TitleColor color);
+
+   const TitleDescription& GetDescription() const;
+   TitleDescription& GetDescription();
 
 protected:
    // Group override
@@ -138,9 +140,9 @@ public:
    
    // ISection overrides
    virtual void SetOwnerName(const char* name) override;
-   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc) override;
-   virtual void SetHeader(ImageType image, const char* desc) override;
-   virtual void SetFooter(ImageType image, const char* prefix, const char* desc) override;
+   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, TitleColor color) override;
+   virtual void SetHeader(ImageType image, const char* desc, bool is_clickable) override;
+   virtual void SetFooter(ImageType image, const char* prefix, const char* desc, bool is_clickable) override;
 
    virtual void SetItemCount(unsigned long count) override;
    virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,

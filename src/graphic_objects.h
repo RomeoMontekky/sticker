@@ -53,9 +53,10 @@ class Text : public ObjectWithBackground
 {
 public:
    Text(const Gdiplus::Color& back_color, const wchar_t* font_name, 
-        unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color);
+        unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width = 0);
    
    bool SetText(const char* text);
+   bool SetColor(const Gdiplus::Color& color);
    
    // ObjectWithBackground overrides
    virtual void RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics) override;
@@ -74,13 +75,14 @@ private:
    unsigned long m_font_size;
    unsigned long m_font_style;
    Gdiplus::Color m_font_color;
+   unsigned long m_width;
 };
 
 class HoverableText : public Text
 {
 public:
    HoverableText(const Gdiplus::Color& back_color, const wchar_t* font_name,
-                 unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color);
+                 unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width);
 
    // Text overrides
    virtual void ProcessHover(long x, long y, TObjectPtrVector& invalidated_objects) override;
@@ -97,7 +99,7 @@ class ClickableText : public HoverableText
 {
 public:
    ClickableText(const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-                 unsigned long font_style, const Gdiplus::Color& font_color,
+                 unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width,
                  const Gdiplus::Color& clickable_font_color);
 
    bool SetClickable(bool is_clickable);
@@ -118,7 +120,7 @@ class CollapsibleText : public HoverableText
 {
 public:
    CollapsibleText(const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-                   unsigned long font_style, const Gdiplus::Color& font_color,
+                   unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width,
                    unsigned long collapsed_font_style, const Gdiplus::Color& collapsed_font_color);
    
    void SetCollapsed(bool is_collapsed);

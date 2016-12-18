@@ -8,6 +8,7 @@
 #include <memory>
 
 enum class ImageType { None, Ok, Expired, Minus, Arrow };
+enum class TitleColor { Red, Green};
 
 class ISection
 {
@@ -15,9 +16,9 @@ public:
    virtual ~ISection();
 
    virtual void SetOwnerName(const char* name) = 0;
-   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc) = 0;
-   virtual void SetHeader(ImageType image, const char* desc) = 0;
-   virtual void SetFooter(ImageType image, const char* prefix, const char* desc) = 0;
+   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, TitleColor color) = 0;
+   virtual void SetHeader(ImageType image, const char* desc, bool is_clickable) = 0;
+   virtual void SetFooter(ImageType image, const char* prefix, const char* desc, bool is_clickable) = 0;
 
    virtual void SetItemCount(unsigned long count) = 0;
    virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,

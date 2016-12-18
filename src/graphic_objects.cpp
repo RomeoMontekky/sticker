@@ -20,7 +20,7 @@ std::wstring AsciiToWide(const char* input)
    }
 
    const auto input_size = std::strlen(input);
-   auto output_size = ::MultiByteToWideChar(CP_ACP, 0, input, input_size, nullptr, 0);
+   const auto output_size = ::MultiByteToWideChar(CP_ACP, 0, input, input_size, nullptr, 0);
    assert(output_size > 0);
 
    std::unique_ptr<wchar_t[]> output(new wchar_t[output_size]);
@@ -92,10 +92,10 @@ void ObjectWithBackground::Draw(Gdiplus::Graphics* graphics) const
 ///////////// class Text /////////////
    
 Text::Text(const Gdiplus::Color& back_color, const wchar_t* font_name, 
-           unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color) :
+           unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width) :
    ObjectWithBackground(back_color),
    m_font_name(font_name), m_font_size(font_size),
-   m_font_style(font_style), m_font_color(font_color)
+   m_font_style(font_style), m_font_color(font_color), m_width(width)
 {
    // no code
 }
@@ -111,9 +111,19 @@ bool Text::SetText(const char* text)
    return false;
 }
 
+bool Text::SetColor(const Gdiplus::Color& color)
+{
+   if (std::memcmp(&m_font_color, &color, sizeof(Gdiplus::Color)) != 0)
+   {
+      m_font_color = color;
+      return true;
+   }
+   return false;
+}
+
 void Text::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphics* graphics)
 {
-   Gdiplus::RectF origin_rect(x, y, 0, 0);
+   Gdiplus::RectF origin_rect(x, y, m_width, 0);
    Gdiplus::Font font(GetFontName(), GetFontSize(), GetFontStyle());
 
    if (m_text.empty())
@@ -162,8 +172,8 @@ const Gdiplus::Color& Text::GetFontColor() const
 
 HoverableText::HoverableText(
    const Gdiplus::Color& back_color, const wchar_t* font_name,
-   unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color) :
-      Text(back_color, font_name, font_size, font_style, font_color), m_is_hovered(false)
+   unsigned long font_size, unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width) :
+      Text(back_color, font_name, font_size, font_style, font_color, width), m_is_hovered(false)
 {
    // no code
 }
@@ -193,8 +203,9 @@ unsigned long HoverableText::GetFontStyleWithoutHover() const
 
 ClickableText::ClickableText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-   unsigned long font_style, const Gdiplus::Color& font_color, const Gdiplus::Color& clickable_font_color) :
-      HoverableText(back_color, font_name, font_size, font_style, font_color),
+   unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width,
+   const Gdiplus::Color& clickable_font_color) :
+      HoverableText(back_color, font_name, font_size, font_style, font_color, width),
       m_clickable_font_color(clickable_font_color), m_is_clickable(true)
 {
    // no code
@@ -236,9 +247,9 @@ const Gdiplus::Color& ClickableText::GetFontColor() const
 
 CollapsibleText::CollapsibleText(
    const Gdiplus::Color& back_color, const wchar_t* font_name, unsigned long font_size,
-   unsigned long font_style, const Gdiplus::Color& font_color,
+   unsigned long font_style, const Gdiplus::Color& font_color, unsigned long width,
    unsigned long collapsed_font_style, const Gdiplus::Color& collapsed_font_color) :
-      HoverableText(back_color, font_name, font_size, font_style, font_color),
+      HoverableText(back_color, font_name, font_size, font_style, font_color, width),
       m_collapsed_font_style(collapsed_font_style), m_collapsed_font_color(collapsed_font_color), m_is_collapsed(true)
 {
    // no code

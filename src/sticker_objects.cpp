@@ -15,7 +15,7 @@ namespace
 const wchar_t g_tahoma_name[] = L"Tahoma";
 const auto g_indent_vert = 3UL;
 const auto g_indent_horz = 3UL;
-const auto g_line_width = 300UL;
+const auto g_section_width = 300UL;
 const auto g_shorted_section_amount = 2UL;
 
 namespace Colors
@@ -47,8 +47,8 @@ ItemTime::ItemTime() :
 /////////// class ItemDesctiption //////////
 
 ItemDescription::ItemDescription() :
-   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black,
-                 Colors::blue_dark)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular,
+                 Colors::black, 0, Colors::blue_dark)
 {}
 
 /////////// class SectionItem //////////
@@ -90,7 +90,8 @@ bool SectionItem::SetClickable(bool is_clickable)
 ////////// class HeaderDescription //////////
 
 HeaderDescription::HeaderDescription() :
-   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular,
+                 Colors::grey_dark, g_section_width - 10 - g_indent_horz, Colors::blue_dark)
 {}
 
 /////////// class SectionHeader //////////
@@ -109,13 +110,19 @@ bool SectionHeader::SetImage(ImageType image)
 
 bool SectionHeader::SetDescription(const char* text)
 {
-   return static_cast<HeaderDescription*>(Group::GetObject(idxImage))->SetText(text);
+   return static_cast<HeaderDescription*>(Group::GetObject(idxDesc))->SetText(text);
+}
+
+bool SectionHeader::SetClickable(bool is_clickable)
+{
+   return static_cast<HeaderDescription*>(Group::GetObject(idxDesc))->SetClickable(is_clickable);
 }
 
 /////////// class FooterPrefix //////////
 
 FooterPrefix::FooterPrefix() :
-   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9,
+                 Gdiplus::FontStyleRegular, Colors::grey_dark, 0, Colors::blue_dark)
 {}
 
 /////////// class FooterDescription //////////
@@ -149,10 +156,15 @@ bool SectionFooter::SetDescription(const char* text)
    return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
+bool SectionFooter::SetClickable(bool is_clickable)
+{
+   return static_cast<BGO::ClickableText*>(Group::GetObject(idxPrefix))->SetClickable(is_clickable);
+}
+
 ///////// class TitleDesctiption //////////
 
 TitleDescription ::TitleDescription() :
-   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleBold, Colors::red_dark,
+   CollapsibleText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleBold, Colors::red_dark, 0,
                    Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
 {}
 
@@ -165,16 +177,6 @@ SectionTitle::SectionTitle() : Group(GroupType::Horizontal)
    Group::SetObject(idxDate, std::make_unique<ItemDate>(), AligningType::Max, g_indent_horz);
    Group::SetObject(idxTime, std::make_unique<ItemTime>(), AligningType::Max, g_indent_horz);
    Group::SetObject(idxDesc, std::make_unique<TitleDescription>(), AligningType::Max, g_indent_horz);
-}
-
-const TitleDescription& SectionTitle::GetDescription() const
-{
-   return *static_cast<const TitleDescription*>(Group::GetObject(idxDesc));
-}
-
-TitleDescription& SectionTitle::GetDescription()
-{
-   return *static_cast<TitleDescription*>(Group::GetObject(idxDesc));
 }
 
 bool SectionTitle::SetImage(ImageType image)
@@ -197,6 +199,22 @@ bool SectionTitle::SetDescription(const char* text)
    return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
+bool SectionTitle::SetColor(TitleColor color)
+{
+   return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetColor(
+      TitleColor::Green == color ? Colors::green_dark : Colors::red_dark);
+}
+
+const TitleDescription& SectionTitle::GetDescription() const
+{
+   return *static_cast<const TitleDescription*>(Group::GetObject(idxDesc));
+}
+
+TitleDescription& SectionTitle::GetDescription()
+{
+   return *static_cast<TitleDescription*>(Group::GetObject(idxDesc));
+}
+
 bool SectionTitle::IsObjectVisible(unsigned long index) const
 {
    return GetDescription().GetCollapsed() || idxImage == index || idxDesc == index;
@@ -204,7 +222,7 @@ bool SectionTitle::IsObjectVisible(unsigned long index) const
 
 /////////// class SectionLine /////////////
 
-SectionLine::SectionLine() : BGO::Line(Colors::grey_very_light, Colors::grey_dark, g_line_width)
+SectionLine::SectionLine() : BGO::Line(Colors::grey_very_light, Colors::grey_dark, g_section_width)
 {}
 
 ///////////// class OwnerName /////////////
@@ -245,14 +263,10 @@ void Section::SetOwnerName(const char* name)
    m_sticker.Update();
 }
 
-void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc)
+void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc, TitleColor color)
 {
    auto& title = GetTitle();
    if (title.SetImage(image))
-   {
-      m_sticker.SetDirty();
-   }
-   if (title.SetDescription(desc))
    {
       m_sticker.SetDirty();
    }
@@ -264,10 +278,18 @@ void Section::SetTitle(ImageType image, const char* date, const char* time, cons
    {
       m_sticker.SetDirty();
    }
+   if (title.SetDescription(desc))
+   {
+      m_sticker.SetDirty();
+   }
+   if (title.SetColor(color))
+   {
+      m_sticker.SetDirty();
+   }
    m_sticker.Update();
 }
 
-void Section::SetHeader(ImageType image, const char* desc)
+void Section::SetHeader(ImageType image, const char* desc, bool is_clickable)
 {
    auto header = static_cast<SectionHeader*>(Group::GetObject(idxHeader));
    if (header->SetImage(image))
@@ -278,10 +300,14 @@ void Section::SetHeader(ImageType image, const char* desc)
    {
       m_sticker.SetDirty();
    }
+   if (header->SetClickable(is_clickable))
+   {
+      m_sticker.SetDirty();
+   }
    m_sticker.Update();
 }
 
-void Section::SetFooter(ImageType image, const char* prefix, const char* desc)
+void Section::SetFooter(ImageType image, const char* prefix, const char* desc, bool is_clickable)
 {
    auto footer = static_cast<SectionFooter*>(Group::GetObject(idxFooter));
    if (footer->SetImage(image))
@@ -293,6 +319,10 @@ void Section::SetFooter(ImageType image, const char* prefix, const char* desc)
       m_sticker.SetDirty();
    }
    if (footer->SetDescription(desc))
+   {
+      m_sticker.SetDirty();
+   }
+   if (footer->SetClickable(is_clickable))
    {
       m_sticker.SetDirty();
    }
@@ -480,7 +510,8 @@ bool Sections::IsObjectVisible(unsigned long index) const
 ///////////// class More ///////////////
 
 More::More() :
-   BGO::ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black, Colors::blue_dark)
+   BGO::ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular,
+                      Colors::black, 0, Colors::blue_dark)
 {
    ClickableText::SetClickable(true);
    SetMoreCount(0);
