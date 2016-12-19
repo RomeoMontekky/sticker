@@ -15,8 +15,13 @@ namespace
 const wchar_t g_tahoma_name[] = L"Tahoma";
 const auto g_indent_vert = 3UL;
 const auto g_indent_horz = 3UL;
-const auto g_section_width = 300UL;
 const auto g_shorted_section_amount = 2UL;
+
+const auto g_section_width = 300UL;
+const auto g_header_descr_width = g_section_width - 10 - g_indent_horz;
+const auto g_item_date_width = 36UL;
+const auto g_item_time_width = 34UL;
+const auto g_footer_prefix_width = g_item_date_width + g_item_time_width + g_indent_horz;
 
 namespace Colors
 {
@@ -28,6 +33,21 @@ namespace Colors
    const Gdiplus::Color green_dark(0x72, 0xBE, 0x44);
    const Gdiplus::Color blue_dark(0x00, 0x55, 0xBB);
    const Gdiplus::Color red_dark(0xD9, 0x47, 0x00);
+   
+   inline const Gdiplus::Color& ColorTypeToColor(ColorType color)
+   {
+      switch (color)
+      {
+         case ColorType::Green: 
+            return green_dark;
+         case ColorType::Red: 
+            return red_dark;
+         case ColorType::Grey: 
+            return grey_dark;
+         default: 
+            assert(!"Uknown color");
+      }
+   }
 }
 
 } // namespace
@@ -35,13 +55,13 @@ namespace Colors
 /////////// class ItemDate //////////
 
 ItemDate::ItemDate() :
-   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue)
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark_with_blue, g_item_date_width)
 {}
 
 /////////// class ItemTime //////////
 
 ItemTime::ItemTime() :
-   Text(Colors::grey_very_light, g_tahoma_name, 8, Gdiplus::FontStyleRegular, Colors::grey_light)
+   Text(Colors::grey_very_light, g_tahoma_name, 8, Gdiplus::FontStyleRegular, Colors::grey_light, g_item_time_width)
 {}
 
 /////////// class ItemDesctiption //////////
@@ -91,7 +111,7 @@ bool SectionItem::SetClickable(bool is_clickable)
 
 HeaderDescription::HeaderDescription() :
    ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular,
-                 Colors::grey_dark, g_section_width - 10 - g_indent_horz, Colors::blue_dark)
+                 Colors::grey_dark, g_header_descr_width, Colors::blue_dark)
 {}
 
 /////////// class SectionHeader //////////
@@ -121,14 +141,14 @@ bool SectionHeader::SetClickable(bool is_clickable)
 /////////// class FooterPrefix //////////
 
 FooterPrefix::FooterPrefix() :
-   ClickableText(Colors::grey_very_light, g_tahoma_name, 9,
-                 Gdiplus::FontStyleRegular, Colors::grey_dark, 0, Colors::blue_dark)
+   Text(Colors::grey_very_light, g_tahoma_name, 9,
+                 Gdiplus::FontStyleRegular, Colors::grey_dark, g_footer_prefix_width)
 {}
 
 /////////// class FooterDescription //////////
 
 FooterDescription::FooterDescription() :
-   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black)
+   ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::black, 0, Colors::blue_dark)
 {}
 
 ///////////// class SectionFooter ////////////////
@@ -156,9 +176,14 @@ bool SectionFooter::SetDescription(const char* text)
    return static_cast<BGO::Text*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
+bool SectionFooter::SetColor(ColorType color)
+{
+   return static_cast<BGO::Text*>(Group::GetObject(idxPrefix))->SetColor(Colors::ColorTypeToColor(color));
+}
+
 bool SectionFooter::SetClickable(bool is_clickable)
 {
-   return static_cast<BGO::ClickableText*>(Group::GetObject(idxPrefix))->SetClickable(is_clickable);
+   return static_cast<BGO::ClickableText*>(Group::GetObject(idxDesc))->SetClickable(is_clickable);
 }
 
 ///////// class TitleDesctiption //////////
@@ -199,10 +224,9 @@ bool SectionTitle::SetDescription(const char* text)
    return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
-bool SectionTitle::SetColor(TitleColor color)
+bool SectionTitle::SetColor(ColorType color)
 {
-   return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetColor(
-      TitleColor::Green == color ? Colors::green_dark : Colors::red_dark);
+   return static_cast<TitleDescription*>(Group::GetObject(idxDesc))->SetColor(Colors::ColorTypeToColor(color));
 }
 
 const TitleDescription& SectionTitle::GetDescription() const
@@ -263,7 +287,7 @@ void Section::SetOwnerName(const char* name)
    m_sticker.Update();
 }
 
-void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc, TitleColor color)
+void Section::SetTitle(ImageType image, const char* date, const char* time, const char* desc, ColorType color)
 {
    auto& title = GetTitle();
    if (title.SetImage(image))
@@ -307,7 +331,7 @@ void Section::SetHeader(ImageType image, const char* desc, bool is_clickable)
    m_sticker.Update();
 }
 
-void Section::SetFooter(ImageType image, const char* prefix, const char* desc, bool is_clickable)
+void Section::SetFooter(ImageType image, const char* prefix, const char* desc, ColorType color, bool is_clickable)
 {
    auto footer = static_cast<SectionFooter*>(Group::GetObject(idxFooter));
    if (footer->SetImage(image))
@@ -319,6 +343,10 @@ void Section::SetFooter(ImageType image, const char* prefix, const char* desc, b
       m_sticker.SetDirty();
    }
    if (footer->SetDescription(desc))
+   {
+      m_sticker.SetDirty();
+   }
+   if (footer->SetColor(color))
    {
       m_sticker.SetDirty();
    }

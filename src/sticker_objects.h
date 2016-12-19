@@ -59,13 +59,13 @@ private:
    enum Indexes { idxImage, idxDesc, idxLast };
 };
 
-class FooterPrefix : public BGO::ClickableText
+class FooterPrefix : public BGO::Text
 {
 public:
    FooterPrefix();
 };
 
-class FooterDescription : public BGO::Text
+class FooterDescription : public BGO::ClickableText
 {
 public:
    FooterDescription();
@@ -79,6 +79,7 @@ public:
    bool SetImage(ImageType image);
    bool SetPrefix(const char* text);
    bool SetDescription(const char* text);
+   bool SetColor(ColorType color);
    bool SetClickable(bool is_clickable);
 
 private:
@@ -100,7 +101,7 @@ public:
    bool SetDate(const char* text);
    bool SetTime(const char* text);
    bool SetDescription(const char* text);
-   bool SetColor(TitleColor color);
+   bool SetColor(ColorType color);
 
    const TitleDescription& GetDescription() const;
    TitleDescription& GetDescription();
@@ -140,9 +141,9 @@ public:
    
    // ISection overrides
    virtual void SetOwnerName(const char* name) override;
-   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, TitleColor color) override;
+   virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, ColorType color) override;
    virtual void SetHeader(ImageType image, const char* desc, bool is_clickable) override;
-   virtual void SetFooter(ImageType image, const char* prefix, const char* desc, bool is_clickable) override;
+   virtual void SetFooter(ImageType image, const char* prefix, const char* desc, ColorType color, bool is_clickable) override;
 
    virtual void SetItemCount(unsigned long count) override;
    virtual void SetItem(unsigned long index, ImageType image, const char* date, const char* time,

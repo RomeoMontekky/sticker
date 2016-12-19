@@ -133,6 +133,10 @@ void Text::RecalculateBoundary(Gdiplus::REAL x, Gdiplus::REAL y, Gdiplus::Graphi
    else
    {
       graphics->MeasureString(m_text.c_str(), m_text.size(), &font, origin_rect, &m_boundary);
+      if (m_width > 0 && m_boundary.Width < m_width)
+      {
+         m_boundary.Width = m_width;
+      }
    }
 }
 
