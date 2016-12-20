@@ -107,12 +107,39 @@ bool SectionItem::SetClickable(bool is_clickable)
    return static_cast<BGO::ClickableText*>(Group::GetObject(idxDesc))->SetClickable(is_clickable);
 }
 
-////////// class HeaderDescription //////////
+////////// class HeaderDescriptionText ////////
 
-HeaderDescription::HeaderDescription() :
+HeaderDescriptionText::HeaderDescriptionText() : 
+   Text(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular, Colors::grey_dark, g_header_descr_width)
+{}
+
+/////// class HeaderDescriptionClickabeText ///////
+
+HeaderDescriptionClickabeText::HeaderDescriptionClickabeText() : 
    ClickableText(Colors::grey_very_light, g_tahoma_name, 9, Gdiplus::FontStyleRegular,
                  Colors::grey_dark, g_header_descr_width, Colors::blue_dark)
-{}
+{
+   SetClickable(true);
+}
+
+////////// class HeaderDescription //////////
+
+HeaderDescription::HeaderDescription() : Group(GroupType::Vertical)
+{
+   Group::SetObjectCount(idxLast);
+   Group::SetObject(idxText, std::make_unique<HeaderDescriptionText>(), AligningType::Max, g_indent_vert);
+   Group::SetObject(idxClkText, std::make_unique<HeaderDescriptionClickabeText>(), AligningType::Max, 0);
+}
+
+bool HeaderDescription::SetText(const char* text)
+{
+   return static_cast<HeaderDescriptionText*>(Group::GetObject(idxText))->SetText(text);
+}
+
+bool HeaderDescription::SetClickableText(const char* text)
+{
+   return static_cast<HeaderDescriptionClickabeText*>(Group::GetObject(idxClkText))->SetText(text);
+}
 
 /////////// class SectionHeader //////////
 
@@ -128,14 +155,14 @@ bool SectionHeader::SetImage(ImageType image)
    //return static_cast<BGO::Image*>(Group::GetObject(idxImage))->SetImage();
 }
 
-bool SectionHeader::SetDescription(const char* text)
+bool SectionHeader::SetText(const char* text)
 {
    return static_cast<HeaderDescription*>(Group::GetObject(idxDesc))->SetText(text);
 }
 
-bool SectionHeader::SetClickable(bool is_clickable)
+bool SectionHeader::SetClickableText(const char* text)
 {
-   return static_cast<HeaderDescription*>(Group::GetObject(idxDesc))->SetClickable(is_clickable);
+   return static_cast<HeaderDescription*>(Group::GetObject(idxDesc))->SetClickableText(text);
 }
 
 /////////// class FooterPrefix //////////
@@ -313,18 +340,18 @@ void Section::SetTitle(ImageType image, const char* date, const char* time, cons
    m_sticker.Update();
 }
 
-void Section::SetHeader(ImageType image, const char* desc, bool is_clickable)
+void Section::SetHeader(ImageType image, const char* text, const char* clickable_text)
 {
    auto header = static_cast<SectionHeader*>(Group::GetObject(idxHeader));
    if (header->SetImage(image))
    {
       m_sticker.SetDirty();
    }
-   if (header->SetDescription(desc))
+   if (header->SetText(text))
    {
       m_sticker.SetDirty();
    }
-   if (header->SetClickable(is_clickable))
+   if (header->SetClickableText(clickable_text))
    {
       m_sticker.SetDirty();
    }

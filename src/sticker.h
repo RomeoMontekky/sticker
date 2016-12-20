@@ -17,7 +17,7 @@ public:
 
    virtual void SetOwnerName(const char* name) = 0;
    virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, ColorType color) = 0;
-   virtual void SetHeader(ImageType image, const char* desc, bool is_clickable) = 0;
+   virtual void SetHeader(ImageType image, const char* text, const char* clickable_text) = 0;
    virtual void SetFooter(ImageType image, const char* prefix, const char* desc, ColorType color, bool is_clickable) = 0;
 
    virtual void SetItemCount(unsigned long count) = 0;

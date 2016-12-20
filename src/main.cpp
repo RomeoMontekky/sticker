@@ -83,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       {
          auto& section = sticker.GetSection(1);
          section.SetTitle(ImageType::None, "22.09", "09:00", "Section 2", ColorType::Green);
-         section.SetHeader(ImageType::None, "Very very long description that obviously will be wrapped.", true);
+         section.SetHeader(ImageType::None, "Very very long description that obviously will be wrapped.", "Click here");
          section.SetFooter(ImageType::None, "4 days", "Description", ColorType::Red, true);
          section.SetOwnerName("Petrov A.S.");
          section.SetItemCount(2);
@@ -93,6 +93,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
       {
          auto& section = sticker.GetSection(2);
          section.SetTitle(ImageType::None, "23.09", "15:00", "Section 3", ColorType::Red);
+         section.SetHeader(ImageType::None, "Very very long description that obviously will be wrapped.", nullptr);
          section.SetItemCount(3);
          section.SetOwnerName("Sidorov N.A.");
          section.SetItem(0, ImageType::None, "23.09", "15:00", "Send", true);

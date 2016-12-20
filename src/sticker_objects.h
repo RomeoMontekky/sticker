@@ -40,10 +40,28 @@ private:
    enum Indexes { idxImage, idxDate, idxTime, idxDesc, idxLast };
 };
 
-class HeaderDescription : public BGO::ClickableText
+class HeaderDescriptionText : public BGO::Text
+{
+public:
+   HeaderDescriptionText();
+};
+
+class HeaderDescriptionClickabeText : public BGO::ClickableText
+{
+public:
+   HeaderDescriptionClickabeText();
+};
+
+class HeaderDescription : public BGO::Group
 {
 public:
    HeaderDescription();
+   
+   bool SetText(const char* text);
+   bool SetClickableText(const char* text);
+   
+private:
+   enum Indexes { idxText, idxClkText, idxLast };   
 };
 
 class SectionHeader : public BGO::Group
@@ -52,8 +70,8 @@ public:
    SectionHeader();
 
    bool SetImage(ImageType image);
-   bool SetDescription(const char* text);
-   bool SetClickable(bool is_clickable);
+   bool SetText(const char* text);
+   bool SetClickableText(const char* text);
 
 private:
    enum Indexes { idxImage, idxDesc, idxLast };
@@ -142,7 +160,7 @@ public:
    // ISection overrides
    virtual void SetOwnerName(const char* name) override;
    virtual void SetTitle(ImageType image, const char* date, const char* time, const char* desc, ColorType color) override;
-   virtual void SetHeader(ImageType image, const char* desc, bool is_clickable) override;
+   virtual void SetHeader(ImageType image, const char* text, const char* clickable_text) override;
    virtual void SetFooter(ImageType image, const char* prefix, const char* desc, ColorType color, bool is_clickable) override;
 
    virtual void SetItemCount(unsigned long count) override;
